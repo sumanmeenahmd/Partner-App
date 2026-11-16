@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-serif: "Noto Serif Devanagari", Georgia, serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: #FAF8F9;
+    color: #1B1518;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    background-color: #FAF8F9;
+    color: #1B1518;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

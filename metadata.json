@@ -1,0 +1,6 @@
+{
+  "name": "Mehfil — Shayari & Partner Keepsake Studio",
+  "description": "एक आत्मीय रचना स्टूडियो जहाँ आप अपने पार्टनर के लिए शायरी, दिल की चिट्ठियाँ, वादे और यादों का ख़ास तोहफ़ा बना सकते हैं।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
