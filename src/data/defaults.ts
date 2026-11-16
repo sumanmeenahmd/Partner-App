@@ -8,11 +8,11 @@ export const ASSET_IMAGES = {
 } as const;
 
 export const MOOD_LABELS: Record<ShayariMood, Record<Language, string>> = {
-  ishq: { hi: 'इश्क़', en: 'Devotion' },
-  muskaan: { hi: 'मुस्कान', en: 'Smile' },
-  intezaar: { hi: 'इंतज़ार', en: 'Longing' },
-  waada: { hi: 'वादा', en: 'Promise' },
-  yaad: { hi: 'यादें', en: 'Memories' },
+  ishq: { hinglish: 'Ishq', en: 'Devotion' },
+  muskaan: { hinglish: 'Muskaan', en: 'Smile' },
+  intezaar: { hinglish: 'Intezaar', en: 'Longing' },
+  waada: { hinglish: 'Waada', en: 'Promise' },
+  yaad: { hinglish: 'Yaadein', en: 'Memories' },
 };
 
 export const PAPER_THEME_META: Record<
@@ -30,7 +30,7 @@ export const PAPER_THEME_META: Record<
   }
 > = {
   alabaster: {
-    label: { hi: 'हाथीदाँत काग़ज़', en: 'Alabaster Cotton' },
+    label: { hinglish: 'Classic Ivory', en: 'Alabaster Cotton' },
     bgClass: 'bg-white',
     textClass: 'text-[#1B1518]',
     mutedClass: 'text-[#6B5E65]',
@@ -41,7 +41,7 @@ export const PAPER_THEME_META: Record<
     canvasAccent: '#C81E4C',
   },
   rosewater: {
-    label: { hi: 'गुल-ए-सहर', en: 'Rosewater Silk' },
+    label: { hinglish: 'Soft Rose', en: 'Rosewater Silk' },
     bgClass: 'bg-[#FDF4F6]',
     textClass: 'text-[#28131A]',
     mutedClass: 'text-[#7C5360]',
@@ -52,7 +52,7 @@ export const PAPER_THEME_META: Record<
     canvasAccent: '#C81E4C',
   },
   plum: {
-    label: { hi: 'शाम-ए-ग़ज़ल', en: 'Moonlit Plum' },
+    label: { hinglish: 'Evening Plum', en: 'Moonlit Plum' },
     bgClass: 'bg-[#261620]',
     textClass: 'text-[#FAF5F7]',
     mutedClass: 'text-[#CBB8C1]',
@@ -63,7 +63,7 @@ export const PAPER_THEME_META: Record<
     canvasAccent: '#F48CA7',
   },
   ink: {
-    label: { hi: 'स्याही रात', en: 'Midnight Ink' },
+    label: { hinglish: 'Midnight Black', en: 'Midnight Ink' },
     bgClass: 'bg-[#141215]',
     textClass: 'text-[#F5F2F4]',
     mutedClass: 'text-[#ABA1A7]',
@@ -75,146 +75,151 @@ export const PAPER_THEME_META: Record<
   },
 };
 
-export const POETIC_STARTERS: { mood: ShayariMood; hi: string; en: string }[] = [
+export const POETIC_STARTERS: { mood: ShayariMood; hinglish: string; en: string }[] = [
   {
     mood: 'ishq',
-    hi: 'तुम्हारे नाम से ही मेरी सुबह की रौशनी होती है,\n...',
+    hinglish: 'Tumhare naam se hi meri subah ki roshni hoti hai,\n...',
     en: 'My mornings begin only when your name crosses my mind,\n...',
   },
   {
     mood: 'muskaan',
-    hi: 'तुम्हारी एक मुस्कान पर ये सारा जहाँ ठहर जाता है,\n...',
+    hinglish: 'Tumhari ek muskaan par ye saara jahan thehar jata hai,\n...',
     en: 'The whole world pauses gently at a single smile of yours,\n...',
   },
   {
     mood: 'waada',
-    hi: 'हाथ थामे रहना यूँ ही हर धूप और छांव में,\n...',
+    hinglish: 'Haath thame rehna yun hi har dhoop aur chhaon mein,\n...',
     en: 'Keep holding my hand through every sun and quiet shadow,\n...',
   },
   {
     mood: 'yaad',
-    hi: 'शाम की चाय और तुम्हारी अनकही बातें आज भी ताज़ा हैं,\n...',
+    hinglish: 'Shaam ki chai aur tumhari baatein aaj bhi dil ke paas hain,\n...',
     en: 'Evening tea and your unspoken stories still linger warmly,\n...',
   },
 ];
 
 export const RHYME_LEXICON: string[] = [
-  'सुकून',
-  'चाँदनी',
-  'धड़कन',
-  'दस्तक',
-  'चराग़',
-  'ख़ामोशी',
-  'मुलाक़ात',
-  'एहसास',
-  'तबस्सुम',
-  'रौशनी',
-  'आरज़ू',
-  'साया',
+  'Sukoon',
+  'Chaandni',
+  'Dhadkan',
+  'Muskaan',
+  'Khamoshi',
+  'Mulakaat',
+  'Ehsaas',
+  'Roshni',
+  'Khwaab',
+  'Saath',
+  'Waada',
+  'Baarish',
 ];
 
 export const DEFAULT_KEEPSAKE_DATA: KeepsakeData = {
   profile: {
-    partnerName: 'अनाया',
-    senderName: 'आरव',
-    milestoneDate: '14 फ़रवरी 2024',
+    partnerName: 'Anaya',
+    senderName: 'Aarav',
+    milestoneDate: '14 Feb 2024',
     dedication:
-      'यह छोटा सा कोना सिर्फ़ तुम्हारे नाम है — हर उस मुस्कान, हर अनकही बात और हर खूबसूरत पल के लिए जो तुमने मेरी ज़िंदगी में जोड़ा है।',
+      'Yeh chhota sa space sirf tumhare naam hai — har us muskaan, har late-night baat aur har pyare pal ke liye jo tumne meri life mein add kiya hai.',
   },
   shayaris: [
     {
       id: 'sh-1',
-      title: 'पहली नज़्म तुम्हारे नाम',
+      title: 'Pehli Nazm Tumhare Naam',
       lines:
-        'तुम साथ हो तो हर शाम महफ़िल सी लगती है,\nख़ामोशियों में भी एक गुफ़्तगू सी चलती है।\nलफ़्ज़ कम पड़ जाते हैं जब भी ज़िक्र तुम्हारा हो,\nतुम्हारी मुस्कान ही मेरी सबसे प्यारी ग़ज़ल बनती है।',
+        'Tum saath ho to har shaam mehfil si lagti hai,\nKhamoshiyon mein bhi ek pyari baat chalti hai.\nLafz kam pad jate hain jab bhi zikr tumhara ho,\nTumhari muskaan hi meri sabse pyari shayari banti hai.',
       mood: 'ishq',
       theme: 'alabaster',
-      createdAt: '16 नवम्बर 2026',
+      imageUrl: ASSET_IMAGES.heroAtelier,
+      photoLayout: 'framed',
+      createdAt: '16 Nov 2026',
       isFavorite: true,
     },
     {
       id: 'sh-2',
-      title: 'बारिश और चाय',
+      title: 'Baarish Aur Chai',
       lines:
-        'भीगी हुई खिड़की के पास दो प्याली चाय रख ली है,\nमैंने हर दुआ में बस तुम्हारी हँसी मांग ली है।',
+        'Bheegi hui khidki ke paas do cup chai rakh li hai,\nMaine har dua mein bas tumhari hansi maang li hai.',
       mood: 'yaad',
       theme: 'plum',
-      createdAt: '12 नवम्बर 2026',
+      imageUrl: ASSET_IMAGES.teaEvening,
+      photoLayout: 'backdrop',
+      createdAt: '12 Nov 2026',
       isFavorite: false,
     },
     {
       id: 'sh-3',
-      title: 'तुम्हारे लिए वादा',
+      title: 'Tumhare Liye Waada',
       lines:
-        'वक़्त चाहे जैसा भी करवट ले इस सफ़र में,\nमेरा हाथ हमेशा तुम्हारे काँधे पर सुकून बनकर रहेगा।',
+        'Waqt chahe jaisa bhi mod le is safar mein,\nMera haath hamesha tumhare liye sukoon bankar rahega.',
       mood: 'waada',
       theme: 'rosewater',
-      createdAt: '10 नवम्बर 2026',
+      photoLayout: 'none',
+      createdAt: '10 Nov 2026',
       isFavorite: true,
     },
   ],
   letters: [
     {
       id: 'lt-1',
-      prompt: 'जब दिन थोड़ा थका देने वाला लगे...',
-      body: 'बस एक गहरी साँस लो और याद रखो कि दिन चाहे कितना भी भारी हो, शाम को सुनने के लिए मैं हमेशा यहीं हूँ। तुम्हें हर वक़्त मज़बूत बने रहने की ज़रूरत नहीं — मेरे पास तुम बिना किसी बोझ के सिर्फ़ ख़ुद रह सकती हो।',
-      signOff: 'हमेशा तुम्हारा, सबसे क़रीब',
-      createdAt: '14 नवम्बर 2026',
+      prompt: 'Jab din thoda thaka dene wala lage...',
+      body: 'Bas ek gehri saans lo aur yaad rakho ki din chahe kitna bhi heavy ho, shaam ko tumhari baat sunne ke liye main hamesha yahin hoon. Tumhe har waqt strong banne ki zaroorat nahi — mere paas tum bina kisi tension ke bas khud reh sakti ho.',
+      signOff: 'Always yours, sabse kareeb',
+      createdAt: '14 Nov 2026',
       opened: false,
     },
     {
       id: 'lt-2',
-      prompt: 'जब तुम्हें मेरी अचानक बहुत याद आए...',
-      body: 'आँखें बंद करके उस शाम को याद करो जब हम बिना किसी घड़ी को देखे हँसते रहे थे। दूरी सिर्फ़ मीलों में होती है, दिल के कोने में तुम हर पल यहीं साथ हो।',
-      signOff: 'ढेर सारे प्यार के साथ',
-      createdAt: '15 नवम्बर 2026',
+      prompt: 'Jab tumhe meri achanak bahut yaad aaye...',
+      body: 'Aankhein band karke us shaam ko yaad karo jab hum bina time dekhe hanste rahe the. Doori sirf distance mein hoti hai, dil ke kone mein tum har pal yahin saath ho.',
+      signOff: 'Dher saare pyar ke saath',
+      createdAt: '15 Nov 2026',
       opened: false,
     },
   ],
   reasons: [
-    { id: 'rs-1', text: 'जिस तरह तुम किसी की बात सुनते वक़्त आँखों से मुस्कुराती हो।' },
-    { id: 'rs-2', text: 'चाय पीते समय छोटी-छोटी बातों पर तुम्हारा ख़ुश हो जाना।' },
-    { id: 'rs-3', text: 'मुश्किल दिनों में भी तुम्हारे पास होने से मिलने वाला सुकून।' },
-    { id: 'rs-4', text: 'तुम्हारी आवाज़ में वह अपनापन जो एक पल में सब ठीक कर देता है।' },
+    { id: 'rs-1', text: 'Jis tarah tum kisi ki baat sunte waqt aankhon se smile karti ho.' },
+    { id: 'rs-2', text: 'Chai peete time chhoti-chhoti baaton par tumhara khush ho jana.' },
+    { id: 'rs-3', text: 'Mushkil dino mein bhi tumhare paas hone se milne wala sukoon.' },
+    { id: 'rs-4', text: 'Tumhari aawaz mein woh apnapan jo ek second mein mood theek kar deta hai.' },
   ],
   vouchers: [
     {
       id: 'vc-1',
-      title: 'सुकून भरी शाम की चाय और लॉन्ग ड्राइव',
-      detail: 'बिना फ़ोन देखे, सिर्फ़ तुम्हारी पसंद के गाने और गर्मागर्म चाय।',
-      validFor: 'जब भी तुम्हारा दिल करे',
+      title: 'Sukoon Bhari Chai Aur Long Drive',
+      detail: 'Bina phone dekhe, sirf tumhari favorite playlist aur garma-garam chai.',
+      validFor: 'Jab bhi tumhara mood ho',
       redeemed: false,
     },
     {
       id: 'vc-2',
-      title: 'तुम्हारी पसंद की पूरी फ़िल्म नाइट',
-      detail: 'पॉपकॉर्न, कंबल और इस बार फ़िल्म चुनने का पूरा हक़ सिर्फ़ तुम्हारा।',
-      validFor: 'किसी भी वीकेंड पर',
+      title: 'Tumhari Choice Ki Movie Night',
+      detail: 'Snacks, cozy setup aur is baar movie choose karne ka full right sirf tumhara.',
+      validFor: 'Kisi bhi weekend par',
       redeemed: false,
     },
     {
       id: 'vc-3',
-      title: 'हाथ से बना डिनर और तारीफ़ों का दिन',
-      detail: 'रसोई की पूरी ज़िम्मेदारी मेरी, तुम्हें सिर्फ़ आराम करना है।',
-      validFor: 'कभी भी इस्तेमाल करें',
+      title: 'Home-Cooked Dinner Treat',
+      detail: 'Kitchen ki poori responsibility meri, tumhe bas aaram se baithna hai.',
+      validFor: 'Kabhi bhi claim karo',
       redeemed: false,
     },
   ],
   memories: [
     {
       id: 'mm-1',
-      dateLabel: 'अक्टूबर 2024',
-      place: 'बारिश वाली शाम',
-      title: 'पहली बार साथ पी हुई मसाला चाय',
-      story: 'बाहर हल्की बूँदाबाँदी थी और बातों का सिलसिला थमने का नाम नहीं ले रहा था। वही शाम थी जब लगा कि वक़्त यहीं रुक जाए।',
+      dateLabel: 'Oct 2024',
+      place: 'Baarish Wali Shaam',
+      title: 'Pehli Baar Saath Pi Hui Masala Chai',
+      story: 'Bahar halki baarish thi aur baaton ka silsila khatam hi nahi ho raha tha. Wahi shaam thi jab laga ki waqt yahin ruk jaye.',
       imageUrl: ASSET_IMAGES.teaEvening,
     },
     {
       id: 'mm-2',
-      dateLabel: 'दिसम्बर 2024',
-      place: 'झील का किनारा',
-      title: 'रोशनी और अनकहे वादे',
-      story: 'शाम ढलते ही पानी पर तैरते दीयों की रोशनी में हमने एक-दूसरे से वादा किया था कि चाहे जो हो, हर साल इस पल को याद रखेंगे।',
+      dateLabel: 'Dec 2024',
+      place: 'Lake Side',
+      title: 'Lights Aur Ankahi Baatein',
+      story: 'Shaam dhalte hi paani par tairte lanterns ki roshni mein humne decide kiya tha ki har saal is din ko yaad rakhenge.',
       imageUrl: ASSET_IMAGES.starlightLantern,
     },
   ],

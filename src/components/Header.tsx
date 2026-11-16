@@ -7,12 +7,12 @@ interface HeaderProps {
 
 export function Header({ lang, onOpenGift }: HeaderProps) {
   const navItems =
-    lang === 'hi'
+    lang === 'hinglish'
       ? [
-          { href: '#shayari-studio', label: 'शायरी' },
-          { href: '#love-letters', label: 'चिट्ठियाँ' },
-          { href: '#love-vouchers', label: 'वादे' },
-          { href: '#memory-timeline', label: 'यादें' },
+          { href: '#shayari-studio', label: 'Shayari' },
+          { href: '#love-letters', label: 'Letters' },
+          { href: '#love-vouchers', label: 'Promises' },
+          { href: '#memory-timeline', label: 'Yaadein' },
         ]
       : [
           { href: '#shayari-studio', label: 'Shayari' },
@@ -49,7 +49,7 @@ export function Header({ lang, onOpenGift }: HeaderProps) {
             onClick={onOpenGift}
             className="px-4 py-2.5 text-xs font-semibold text-white bg-[#C81E4C] hover:bg-[#AD1740] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C81E4C]"
           >
-            {lang === 'hi' ? 'तोहफ़ा देखें' : 'Open Gift'}
+            {lang === 'hinglish' ? 'Gift Dekho' : 'Open Gift'}
           </button>
         </div>
       </div>

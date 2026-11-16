@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Download, Upload } from 'lucide-react';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { LettersSection } from './components/LettersSection';
@@ -17,14 +18,14 @@ import {
 } from './types/keepsake';
 import { decodeKeepsakeFromHash, encodeKeepsakeToUrl } from './utils/shareCodec';
 
-const STORAGE_KEY = 'mehfil_keepsake_studio_v1';
-const LANG_STORAGE_KEY = 'mehfil_lang_v1';
+const STORAGE_KEY = 'mehfil_keepsake_studio_v2';
+const LANG_STORAGE_KEY = 'mehfil_lang_v2';
 
-function formatToday(lang: Language): string {
+function formatToday(): string {
   try {
-    return new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-US', {
+    return new Intl.DateTimeFormat('en-IN', {
       day: 'numeric',
-      month: 'long',
+      month: 'short',
       year: 'numeric',
     }).format(new Date());
   } catch {
@@ -36,9 +37,9 @@ export default function App() {
   const [lang, setLang] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem(LANG_STORAGE_KEY);
-      return saved === 'en' ? 'en' : 'hi';
+      return saved === 'en' ? 'en' : 'hinglish';
     } catch {
-      return 'hi';
+      return 'hinglish';
     }
   });
 
@@ -67,6 +68,9 @@ export default function App() {
     return DEFAULT_KEEPSAKE_DATA;
   });
 
+  const [backupNotice, setBackupNotice] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
     try {
       localStorage.setItem(LANG_STORAGE_KEY, lang);
@@ -92,7 +96,7 @@ export default function App() {
     const newItem: ShayariItem = {
       ...item,
       id: `sh-${Date.now()}`,
-      createdAt: formatToday(lang),
+      createdAt: formatToday(),
     };
     setData((prev) => ({ ...prev, shayaris: [newItem, ...prev.shayaris] }));
   };
@@ -124,7 +128,7 @@ export default function App() {
     const newLetter: LoveLetter = {
       ...letter,
       id: `lt-${Date.now()}`,
-      createdAt: formatToday(lang),
+      createdAt: formatToday(),
       opened: false,
     };
     setData((prev) => ({ ...prev, letters: [newLetter, ...prev.letters] }));
@@ -178,7 +182,7 @@ export default function App() {
     setData((prev) => ({
       ...prev,
       vouchers: prev.vouchers.map((v) =>
-        v.id === id ? { ...v, redeemed: true, redeemedAt: formatToday(lang) } : v
+        v.id === id ? { ...v, redeemed: true, redeemedAt: formatToday() } : v
       ),
     }));
   };
@@ -207,18 +211,52 @@ export default function App() {
     }));
   };
 
-  const handleCopyShareLink = async (): Promise<boolean> => {
+  const handleCopyShareLink = async (): Promise<{ ok: boolean; strippedPhotos: number }> => {
     try {
-      const shareUrl = encodeKeepsakeToUrl(data);
+      const { url, strippedPhotos } = encodeKeepsakeToUrl(data);
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        return true;
+        await navigator.clipboard.writeText(url);
+        return { ok: true, strippedPhotos };
       }
-      window.location.hash = new URL(shareUrl).hash;
-      return true;
+      window.location.hash = new URL(url).hash;
+      return { ok: true, strippedPhotos };
     } catch {
-      return false;
+      return { ok: false, strippedPhotos: 0 };
     }
+  };
+
+  const handleExportBackup = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mehfil-${data.profile.partnerName.toLowerCase().replace(/\s+/g, '-')}-backup.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setBackupNotice(lang === 'hinglish' ? 'Backup file download ho gayi!' : 'Backup downloaded!');
+    window.setTimeout(() => setBackupNotice(null), 2600);
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result)) as KeepsakeData;
+        if (parsed && parsed.profile && Array.isArray(parsed.shayaris)) {
+          setData(parsed);
+          setIsSharedLinkMode(false);
+          setBackupNotice(lang === 'hinglish' ? 'Backup restore ho gaya!' : 'Backup restored!');
+        }
+      } catch {
+        setBackupNotice(lang === 'hinglish' ? 'Invalid backup file' : 'Invalid backup file');
+      } finally {
+        window.setTimeout(() => setBackupNotice(null), 2600);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   if (giftMode) {
@@ -290,19 +328,49 @@ export default function App() {
 
       <footer className="border-t border-[#E6DFE3] py-8 mt-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-xs text-[#6B5E65]">
-          <span className="font-serif text-sm font-semibold text-[#1B1518]">Mehfil</span>
-          <span>
-            {lang === 'hi'
-              ? `${data.profile.senderName} और ${data.profile.partnerName} की यादों का कोना`
-              : `A private keepsake created by ${data.profile.senderName} for ${data.profile.partnerName}`}
-          </span>
-          <button
-            type="button"
-            onClick={() => setGiftMode(true)}
-            className="font-medium text-[#C81E4C] hover:underline underline-offset-4 cursor-pointer"
-          >
-            {lang === 'hi' ? 'पार्टनर व्यू खोलें' : 'Open Partner Gift View'}
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="font-serif text-sm font-semibold text-[#1B1518]">Mehfil</span>
+            <span aria-hidden="true">·</span>
+            <span>
+              {lang === 'hinglish'
+                ? `${data.profile.senderName} aur ${data.profile.partnerName} ke liye`
+                : `A private keepsake created by ${data.profile.senderName} for ${data.profile.partnerName}`}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            {backupNotice && <span className="text-[#C81E4C] font-medium">{backupNotice}</span>}
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              className="inline-flex items-center gap-1.5 hover:text-[#1B1518] cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{lang === 'hinglish' ? 'Backup Save Karo' : 'Export Backup'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => importInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 hover:text-[#1B1518] cursor-pointer"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>{lang === 'hinglish' ? 'Restore Karo' : 'Import Backup'}</span>
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json"
+              onChange={handleImportBackup}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => setGiftMode(true)}
+              className="font-medium text-[#C81E4C] hover:underline underline-offset-4 cursor-pointer"
+            >
+              {lang === 'hinglish' ? 'Gift View Kholo' : 'Open Partner Gift View'}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

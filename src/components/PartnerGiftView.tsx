@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Download,
   Heart,
   LockOpen,
@@ -40,6 +42,8 @@ export function PartnerGiftView({
   const [unsealedCover, setUnsealedCover] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
   const [activeShayariIdx, setActiveShayariIdx] = useState(0);
+  const [replyText, setReplyText] = useState('');
+  const [replyCopied, setReplyCopied] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -63,6 +67,20 @@ export function PartnerGiftView({
     onExitGiftMode();
   };
 
+  const handleCopyReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    try {
+      await navigator.clipboard.writeText(
+        `Hey ${data.profile.senderName}, I just opened your Mehfil gift ❤️\n\n"${replyText.trim()}"`
+      );
+      setReplyCopied(true);
+      window.setTimeout(() => setReplyCopied(false), 2600);
+    } catch {
+      // ignore
+    }
+  };
+
   const safeIdx =
     data.shayaris.length > 0 ? Math.min(activeShayariIdx, data.shayaris.length - 1) : 0;
   const activeShayari = data.shayaris[safeIdx];
@@ -80,11 +98,11 @@ export function PartnerGiftView({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>
               {isSharedLinkMode
-                ? lang === 'hi'
-                  ? 'स्टूडियो खोलें'
+                ? lang === 'hinglish'
+                  ? 'Studio Kholo'
                   : 'Open Studio'
-                : lang === 'hi'
-                  ? 'स्टूडियो पर लौटें'
+                : lang === 'hinglish'
+                  ? 'Studio Wapas Jao'
                   : 'Back to Studio'}
             </span>
           </button>
@@ -102,19 +120,19 @@ export function PartnerGiftView({
 
           <div className="p-8 md:p-10 text-center space-y-5">
             <p className="text-xs font-medium text-[#C81E4C]">
-              {lang === 'hi'
-                ? `${data.profile.senderName} की ओर से एक ख़ास तोहफ़ा`
+              {lang === 'hinglish'
+                ? `${data.profile.senderName} ki taraf se ek special gift`
                 : `A Personal Keepsake From ${data.profile.senderName}`}
             </p>
             <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#1B1518] [text-wrap:balance]">
-              {lang === 'hi'
-                ? `ख़ास तुम्हारे लिए, ${data.profile.partnerName}`
+              {lang === 'hinglish'
+                ? `Sirf Tumhare Liye, ${data.profile.partnerName}`
                 : `Especially for You, ${data.profile.partnerName}`}
             </h1>
             <p className="text-sm text-[#5A4E54] max-w-md mx-auto leading-relaxed">
-              {lang === 'hi'
-                ? 'इसमें तुम्हारे नाम लिखी शायरी, कुछ बंद चिट्ठियाँ, हमारे वादे और साथ बिताए प्यारे लम्हे सहेजे गए हैं।'
-                : 'Inside are handwritten Shayari, sealed letters waiting for you, love promises, and cherished memories.'}
+              {lang === 'hinglish'
+                ? 'Isme tumhare naam likhi shayari, photos, sealed letters, sweet promises aur hamari pyari yaadein save ki gayi hain.'
+                : 'Inside are handwritten Shayari, photo cards, sealed letters waiting for you, love promises, and cherished memories.'}
             </p>
             <div className="pt-2">
               <button
@@ -123,7 +141,7 @@ export function PartnerGiftView({
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-[#C81E4C] hover:bg-[#AD1740] rounded-lg transition-colors cursor-pointer"
               >
                 <LockOpen className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'तोहफ़ा खोलें' : 'Unseal & Open'}</span>
+                <span>{lang === 'hinglish' ? 'Gift Open Karo' : 'Unseal & Open'}</span>
               </button>
             </div>
           </div>
@@ -147,11 +165,11 @@ export function PartnerGiftView({
             <ArrowLeft className="w-4 h-4" />
             <span>
               {isSharedLinkMode
-                ? lang === 'hi'
-                  ? 'रचना स्टूडियो में जाएं'
+                ? lang === 'hinglish'
+                  ? 'Studio Mein Edit Karo'
                   : 'Edit in Studio'
-                : lang === 'hi'
-                  ? 'रचना स्टूडियो पर लौटें'
+                : lang === 'hinglish'
+                  ? 'Studio Wapas Jao'
                   : 'Back to Studio'}
             </span>
           </button>
@@ -168,12 +186,12 @@ export function PartnerGiftView({
             {musicOn ? (
               <>
                 <Volume2 className="w-3.5 h-3.5 text-[#C81E4C]" />
-                <span>{lang === 'hi' ? 'संगीत बंद करें' : 'Mute'}</span>
+                <span>{lang === 'hinglish' ? 'Music Off' : 'Mute'}</span>
               </>
             ) : (
               <>
                 <VolumeX className="w-3.5 h-3.5 text-[#6B5E65]" />
-                <span>{lang === 'hi' ? 'सुकून संगीत' : 'Ambient Chime'}</span>
+                <span>{lang === 'hinglish' ? 'Soft Music' : 'Ambient Chime'}</span>
               </>
             )}
           </button>
@@ -189,8 +207,8 @@ export function PartnerGiftView({
             {data.profile.milestoneDate}
           </p>
           <h1 className="font-serif text-3xl md:text-5xl font-bold text-[#1B1518] [text-wrap:balance]">
-            {lang === 'hi'
-              ? `प्रिय ${data.profile.partnerName}, यह सिर्फ़ तुम्हारे लिए है`
+            {lang === 'hinglish'
+              ? `Dear ${data.profile.partnerName}, Yeh Sirf Tumhare Liye Hai`
               : `Dear ${data.profile.partnerName}, This Is For You`}
           </h1>
           <p className="font-serif text-base md:text-lg text-[#5A4E54] max-w-2xl mx-auto leading-relaxed">
@@ -204,10 +222,10 @@ export function PartnerGiftView({
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-medium text-[#C81E4C] mb-1">
-                  {lang === 'hi' ? 'तुम्हारे नाम शायरी' : 'Shayari Written for You'}
+                  {lang === 'hinglish' ? 'Tumhare Naam Shayari' : 'Shayari Written for You'}
                 </p>
                 <h2 className="font-serif text-2xl font-bold text-[#1B1518]">
-                  {lang === 'hi' ? 'दिल से निकले कुछ लफ़्ज़' : 'Verses From the Heart'}
+                  {lang === 'hinglish' ? 'Dil Se Likhi Hui Lines' : 'Verses From the Heart'}
                 </h2>
               </div>
 
@@ -242,63 +260,148 @@ export function PartnerGiftView({
 
             {(() => {
               const pTheme = PAPER_THEME_META[activeShayari.theme];
+              const layout = activeShayari.imageUrl
+                ? activeShayari.photoLayout || 'framed'
+                : 'none';
+
+              if (layout === 'backdrop' && activeShayari.imageUrl) {
+                return (
+                  <div className="relative rounded-2xl border border-[#E6DFE3] overflow-hidden min-h-[440px] p-8 md:p-12 text-center flex flex-col justify-between text-white">
+                    <ResilientImage
+                      src={activeShayari.imageUrl}
+                      alt={activeShayari.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div
+                      className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/55 to-black/40"
+                      aria-hidden="true"
+                    />
+                    <div className="relative z-10 text-xs text-white/80">
+                      {MOOD_LABELS[activeShayari.mood][lang]}
+                      <span aria-hidden="true" className="mx-1.5">·</span>
+                      {activeShayari.createdAt}
+                    </div>
+                    <div className="relative z-10 space-y-5 my-8">
+                      <h3 className="font-serif text-2xl font-bold text-white">
+                        {activeShayari.title}
+                      </h3>
+                      <div className="w-12 h-px mx-auto bg-[#F48CA7]" />
+                      <p className="font-serif text-lg md:text-xl leading-[2] whitespace-pre-line max-w-xl mx-auto text-white">
+                        {activeShayari.lines}
+                      </p>
+                    </div>
+                    <div className="relative z-10 pt-6 border-t border-white/20 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onToggleShayariFavorite(activeShayari.id)}
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                          activeShayari.isFavorite
+                            ? 'border-[#C81E4C] bg-[#C81E4C] text-white'
+                            : 'border-white/30 text-white hover:border-[#F48CA7]'
+                        }`}
+                      >
+                        <Heart
+                          className="w-3.5 h-3.5"
+                          fill={activeShayari.isFavorite ? 'currentColor' : 'none'}
+                        />
+                        <span>
+                          {activeShayari.isFavorite
+                            ? lang === 'hinglish'
+                              ? 'Dil Ko Chhoo Gayi'
+                              : 'Loved This'
+                            : lang === 'hinglish'
+                              ? 'Pasand Aayi'
+                              : 'Love This'}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void downloadShayariCardPng(
+                            activeShayari,
+                            data.profile.senderName,
+                            data.profile.partnerName,
+                            lang
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-white/30 text-white hover:border-[#F48CA7] transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>{lang === 'hinglish' ? 'Card Save Karo' : 'Save Card'}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div
-                  className={`rounded-2xl border p-8 md:p-12 text-center space-y-6 transition-colors ${pTheme.bgClass} ${pTheme.borderClass}`}
+                  className={`rounded-2xl border overflow-hidden transition-colors ${pTheme.bgClass} ${pTheme.borderClass}`}
                 >
-                  <div className={`text-xs ${pTheme.mutedClass}`}>
-                    {MOOD_LABELS[activeShayari.mood][lang]}
-                    <span aria-hidden="true" className="mx-1.5">·</span>
-                    {activeShayari.createdAt}
-                  </div>
-                  <h3 className={`font-serif text-2xl font-bold ${pTheme.textClass}`}>
-                    {activeShayari.title}
-                  </h3>
-                  <div className="w-12 h-px mx-auto bg-[#C81E4C]/50" />
-                  <p
-                    className={`font-serif text-lg md:text-xl leading-[2] whitespace-pre-line max-w-xl mx-auto ${pTheme.textClass}`}
-                  >
-                    {activeShayari.lines}
-                  </p>
-                  <div className="pt-6 border-t border-current/10 flex flex-wrap items-center justify-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => onToggleShayariFavorite(activeShayari.id)}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
-                        activeShayari.isFavorite
-                          ? 'border-[#C81E4C] bg-[#C81E4C] text-white'
-                          : `border-current/20 ${pTheme.textClass} hover:border-[#C81E4C]`
-                      }`}
-                    >
-                      <Heart
-                        className="w-3.5 h-3.5"
-                        fill={activeShayari.isFavorite ? 'currentColor' : 'none'}
+                  {layout === 'framed' && activeShayari.imageUrl && (
+                    <div className="aspect-[16/9] max-h-[380px] w-full overflow-hidden bg-[#EFEAEF]">
+                      <ResilientImage
+                        src={activeShayari.imageUrl}
+                        alt={activeShayari.title}
+                        className="w-full h-full object-cover"
                       />
-                      <span>
-                        {activeShayari.isFavorite
-                          ? lang === 'hi'
-                            ? 'दिल को छू गई'
-                            : 'Loved This'
-                          : lang === 'hi'
-                            ? 'पसंद आई'
-                            : 'Love This'}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        downloadShayariCardPng(
-                          activeShayari,
-                          data.profile.senderName,
-                          data.profile.partnerName,
-                          lang
-                        )
-                      }
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-current/20 ${pTheme.textClass} hover:border-[#C81E4C] transition-colors cursor-pointer`}
+                    </div>
+                  )}
+                  <div className="p-8 md:p-12 text-center space-y-6">
+                    <div className={`text-xs ${pTheme.mutedClass}`}>
+                      {MOOD_LABELS[activeShayari.mood][lang]}
+                      <span aria-hidden="true" className="mx-1.5">·</span>
+                      {activeShayari.createdAt}
+                    </div>
+                    <h3 className={`font-serif text-2xl font-bold ${pTheme.textClass}`}>
+                      {activeShayari.title}
+                    </h3>
+                    <div className="w-12 h-px mx-auto bg-[#C81E4C]/50" />
+                    <p
+                      className={`font-serif text-lg md:text-xl leading-[2] whitespace-pre-line max-w-xl mx-auto ${pTheme.textClass}`}
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'कार्ड सेव करें' : 'Save Card'}</span>
-                    </button>
+                      {activeShayari.lines}
+                    </p>
+                    <div className="pt-6 border-t border-current/10 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onToggleShayariFavorite(activeShayari.id)}
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                          activeShayari.isFavorite
+                            ? 'border-[#C81E4C] bg-[#C81E4C] text-white'
+                            : `border-current/20 ${pTheme.textClass} hover:border-[#C81E4C]`
+                        }`}
+                      >
+                        <Heart
+                          className="w-3.5 h-3.5"
+                          fill={activeShayari.isFavorite ? 'currentColor' : 'none'}
+                        />
+                        <span>
+                          {activeShayari.isFavorite
+                            ? lang === 'hinglish'
+                              ? 'Dil Ko Chhoo Gayi'
+                              : 'Loved This'
+                            : lang === 'hinglish'
+                              ? 'Pasand Aayi'
+                              : 'Love This'}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void downloadShayariCardPng(
+                            activeShayari,
+                            data.profile.senderName,
+                            data.profile.partnerName,
+                            lang
+                          )
+                        }
+                        className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg border border-current/20 ${pTheme.textClass} hover:border-[#C81E4C] transition-colors cursor-pointer`}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>{lang === 'hinglish' ? 'Card Save Karo' : 'Save Card'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -311,11 +414,11 @@ export function PartnerGiftView({
           <section className="space-y-6 pt-8 border-t border-[#E6DFE3]">
             <div>
               <p className="text-xs font-medium text-[#C81E4C] mb-1">
-                {lang === 'hi' ? 'दिल की चिट्ठियाँ' : 'Sealed Letters'}
+                {lang === 'hinglish' ? 'Dil Ki Letters' : 'Sealed Letters'}
               </p>
               <h2 className="font-serif text-2xl font-bold text-[#1B1518]">
-                {lang === 'hi'
-                  ? 'हर लिफ़ाफ़े को क्लिक करके खोलें'
+                {lang === 'hinglish'
+                  ? 'Har Envelope Par Click Karke Open Karo'
                   : 'Click Each Envelope to Unseal'}
               </h2>
             </div>
@@ -331,11 +434,11 @@ export function PartnerGiftView({
                       <Mail className="w-3.5 h-3.5 text-[#C81E4C]" />
                       <span>
                         {letter.opened
-                          ? lang === 'hi'
-                            ? 'खोली गई चिट्ठी'
+                          ? lang === 'hinglish'
+                            ? 'Open Ho Gaya'
                             : 'Unsealed'
-                          : lang === 'hi'
-                            ? 'बंद लिफ़ाफ़ा'
+                          : lang === 'hinglish'
+                            ? 'Sealed Letter'
                             : 'Sealed'}
                       </span>
                     </div>
@@ -345,6 +448,15 @@ export function PartnerGiftView({
 
                     {letter.opened ? (
                       <div className="space-y-3 pt-2">
+                        {letter.imageUrl && (
+                          <div className="aspect-[16/9] rounded-xl overflow-hidden border border-[#E6DFE3]">
+                            <ResilientImage
+                              src={letter.imageUrl}
+                              alt={letter.prompt}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                         <p className="font-serif text-sm text-[#1B1518] leading-relaxed whitespace-pre-line">
                           {letter.body}
                         </p>
@@ -354,8 +466,8 @@ export function PartnerGiftView({
                       </div>
                     ) : (
                       <p className="text-sm text-[#6B5E65]">
-                        {lang === 'hi'
-                          ? 'यह चिट्ठी तुम्हारे लिए बंद रखी गई है।'
+                        {lang === 'hinglish'
+                          ? 'Yeh letter tumhare liye seal karke rakha gaya hai.'
                           : 'Waiting behind its wax seal for you to open.'}
                       </p>
                     )}
@@ -371,7 +483,7 @@ export function PartnerGiftView({
                       className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#1B1518] hover:bg-[#31262C] rounded-lg transition-colors cursor-pointer"
                     >
                       <LockOpen className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'लिफ़ाफ़ा खोलें' : 'Break Wax Seal'}</span>
+                      <span>{lang === 'hinglish' ? 'Letter Open Karo' : 'Break Wax Seal'}</span>
                     </button>
                   )}
                 </div>
@@ -385,11 +497,11 @@ export function PartnerGiftView({
           <section className="space-y-6 pt-8 border-t border-[#E6DFE3]">
             <div>
               <p className="text-xs font-medium text-[#C81E4C] mb-1">
-                {lang === 'hi' ? 'तुम्हारी ख़ूबियाँ' : 'Why You Matter'}
+                {lang === 'hinglish' ? 'Why You Are Special' : 'Why You Matter'}
               </p>
               <h2 className="font-serif text-2xl font-bold text-[#1B1518]">
-                {lang === 'hi'
-                  ? 'छोटी-छोटी बातें जो तुम्हें सबसे ख़ास बनाती हैं'
+                {lang === 'hinglish'
+                  ? 'Chhoti-Chhoti Baatein Jo Tumhe Sabse Special Banati Hain'
                   : 'Little Things I Adore About You'}
               </h2>
             </div>
@@ -414,11 +526,11 @@ export function PartnerGiftView({
           <section className="space-y-6 pt-8 border-t border-[#E6DFE3]">
             <div>
               <p className="text-xs font-medium text-[#C81E4C] mb-1">
-                {lang === 'hi' ? 'प्यार के वादे' : 'Love Vouchers'}
+                {lang === 'hinglish' ? 'Pyar Ke Waade' : 'Love Vouchers'}
               </p>
               <h2 className="font-serif text-2xl font-bold text-[#1B1518]">
-                {lang === 'hi'
-                  ? 'जब दिल चाहे, इनमें से कोई भी वादा भुना लेना'
+                {lang === 'hinglish'
+                  ? 'Jab Dil Kare, Inme Se Koi Bhi Promise Claim Kar Lena'
                   : 'Claim Any Promise Whenever You Wish'}
               </h2>
             </div>
@@ -444,7 +556,7 @@ export function PartnerGiftView({
                     <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#C81E4C] pt-2">
                       <CheckCircle2 className="w-4 h-4" />
                       <span>
-                        {lang === 'hi' ? 'तुमने यह वादा चुन लिया है' : 'Claimed with Love'}
+                        {lang === 'hinglish' ? 'Promise Claim Ho Gaya' : 'Claimed with Love'}
                       </span>
                     </div>
                   ) : (
@@ -456,7 +568,7 @@ export function PartnerGiftView({
                       }}
                       className="w-full py-2 px-4 text-xs font-semibold text-white bg-[#C81E4C] hover:bg-[#AD1740] rounded-lg transition-colors cursor-pointer"
                     >
-                      {lang === 'hi' ? 'यह वादा भुनाएं' : 'Claim Promise'}
+                      {lang === 'hinglish' ? 'Promise Claim Karo' : 'Claim Promise'}
                     </button>
                   )}
                 </div>
@@ -470,10 +582,10 @@ export function PartnerGiftView({
           <section className="space-y-6 pt-8 border-t border-[#E6DFE3]">
             <div>
               <p className="text-xs font-medium text-[#C81E4C] mb-1">
-                {lang === 'hi' ? 'हमारी यादें' : 'Memory Timeline'}
+                {lang === 'hinglish' ? 'Hamari Yaadein' : 'Memory Timeline'}
               </p>
               <h2 className="font-serif text-2xl font-bold text-[#1B1518]">
-                {lang === 'hi' ? 'कुछ अनमोल लम्हे' : 'Moments We Carry With Us'}
+                {lang === 'hinglish' ? 'Kuch Unforgettable Moments' : 'Moments We Carry With Us'}
               </h2>
             </div>
 
@@ -509,6 +621,63 @@ export function PartnerGiftView({
             </div>
           </section>
         )}
+
+        {/* Sweet Reply Note Box for Partner */}
+        <section className="pt-8 border-t border-[#E6DFE3]">
+          <form
+            onSubmit={handleCopyReply}
+            className="bg-white border border-[#E6DFE3] rounded-2xl p-6 md:p-8 space-y-4"
+          >
+            <div>
+              <p className="text-xs font-medium text-[#C81E4C] mb-1">
+                {lang === 'hinglish' ? 'Tumhara Reply' : 'Send a Note Back'}
+              </p>
+              <h2 className="font-serif text-xl font-bold text-[#1B1518]">
+                {lang === 'hinglish'
+                  ? `${data.profile.senderName} ke liye ek chhota sa reply likho`
+                  : `Write a sweet reply for ${data.profile.senderName}`}
+              </h2>
+            </div>
+
+            <textarea
+              rows={3}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              maxLength={400}
+              placeholder={
+                lang === 'hinglish'
+                  ? 'Yeh padh kar kaisa laga, yahan likho aur WhatsApp par bhej do...'
+                  : 'Write how this made you feel, then copy and send it back...'
+              }
+              className="w-full px-4 py-3 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C] resize-none"
+            />
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#C81E4C] hover:bg-[#AD1740] rounded-lg transition-colors cursor-pointer"
+              >
+                {replyCopied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>
+                      {lang === 'hinglish'
+                        ? 'Reply Copy Ho Gaya! WhatsApp Pe Paste Karo'
+                        : 'Copied! Ready for WhatsApp'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>
+                      {lang === 'hinglish' ? 'WhatsApp Reply Copy Karo' : 'Copy Reply for WhatsApp'}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </section>
       </main>
     </div>
   );

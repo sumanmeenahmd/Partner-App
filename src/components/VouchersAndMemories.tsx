@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { CheckCircle2, Clock, ImagePlus, Plus, Ticket, Trash2 } from 'lucide-react';
 import { ASSET_IMAGES } from '../data/defaults';
 import { Language, LoveVoucher, MemoryItem } from '../types/keepsake';
+import { resizeImageFile } from '../utils/imageHelper';
 import { ResilientImage } from './ResilientImage';
 
 interface VouchersAndMemoriesProps {
@@ -13,42 +14,6 @@ interface VouchersAndMemoriesProps {
   onResetVoucher: (id: string) => void;
   onAddMemory: (memory: Omit<MemoryItem, 'id'>) => void;
   onDeleteMemory: (id: string) => void;
-}
-
-function resizeImageFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 800;
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas context unavailable'));
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.78));
-      };
-      img.onerror = () => reject(new Error('Failed to load image'));
-      img.src = String(reader.result);
-    };
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
 }
 
 export function VouchersAndMemories({
@@ -79,8 +44,10 @@ export function VouchersAndMemories({
       title: vTitle.trim(),
       detail:
         vDetail.trim() ||
-        (lang === 'hi' ? 'जब भी तुम्हारा दिल करे, बस याद दिला देना।' : 'Redeem anytime you wish.'),
-      validFor: vValid.trim() || (lang === 'hi' ? 'हमेशा मान्य' : 'Valid forever'),
+        (lang === 'hinglish'
+          ? 'Jab bhi tumhara mood ho, bas yaad dila dena.'
+          : 'Redeem anytime you wish.'),
+      validFor: vValid.trim() || (lang === 'hinglish' ? 'Valid Forever' : 'Valid forever'),
     });
     setVTitle('');
     setVDetail('');
@@ -91,10 +58,12 @@ export function VouchersAndMemories({
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const dataUrl = await resizeImageFile(file);
+      const dataUrl = await resizeImageFile(file, 720, 0.78);
       setMImage(dataUrl);
     } catch {
       // keep existing image selection on error
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -102,8 +71,8 @@ export function VouchersAndMemories({
     e.preventDefault();
     if (!mTitle.trim() || !mStory.trim()) return;
     onAddMemory({
-      dateLabel: mDate.trim() || (lang === 'hi' ? 'एक ख़ास दिन' : 'A Special Day'),
-      place: mPlace.trim() || (lang === 'hi' ? 'हमारी जगह' : 'Our Spot'),
+      dateLabel: mDate.trim() || (lang === 'hinglish' ? 'Ek Special Din' : 'A Special Day'),
+      place: mPlace.trim() || (lang === 'hinglish' ? 'Hamari Jagah' : 'Our Spot'),
       title: mTitle.trim(),
       story: mStory.trim(),
       imageUrl: mImage,
@@ -121,16 +90,16 @@ export function VouchersAndMemories({
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-8">
             <p className="text-xs font-medium text-[#C81E4C] mb-2">
-              {lang === 'hi' ? '03. प्यार के वादे' : '03. Love Vouchers'}
+              {lang === 'hinglish' ? '03. Pyar Ke Waade' : '03. Love Vouchers'}
             </p>
             <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#1B1518] mb-2 [text-wrap:balance]">
-              {lang === 'hi'
-                ? 'मीठे वादे और छोटे-छोटे सरप्राइज़ कूपन'
+              {lang === 'hinglish'
+                ? 'Sweet Promises & Surprise Coupons'
                 : 'Redeemable Love Promises & Sweet Surprises'}
             </h2>
             <p className="text-sm text-[#5A4E54] max-w-2xl">
-              {lang === 'hi'
-                ? 'अपने पार्टनर के लिए ऐसे वादे बनाएं जिन्हें वे तोहफ़ा खोलकर कभी भी भुना (Claim) सकें।'
+              {lang === 'hinglish'
+                ? 'Apne partner ke liye aise cute promises banao jinhe woh Gift Mode mein kabhi bhi claim kar sakein.'
                 : 'Craft thoughtful date promises and acts of care that your partner can interactively claim inside Partner Gift View.'}
             </p>
           </div>
@@ -141,12 +110,12 @@ export function VouchersAndMemories({
               className="lg:col-span-5 bg-white border border-[#E6DFE3] rounded-2xl p-6 space-y-4"
             >
               <h3 className="font-serif text-lg font-bold text-[#1B1518]">
-                {lang === 'hi' ? 'नया वादा जोड़ें' : 'Create a Love Voucher'}
+                {lang === 'hinglish' ? 'Naya Promise Add Karo' : 'Create a Love Voucher'}
               </h3>
 
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'वादे का शीर्षक' : 'Voucher Title'}
+                  {lang === 'hinglish' ? 'Promise Title' : 'Voucher Title'}
                 </label>
                 <input
                   type="text"
@@ -155,8 +124,8 @@ export function VouchersAndMemories({
                   onChange={(e) => setVTitle(e.target.value)}
                   maxLength={90}
                   placeholder={
-                    lang === 'hi'
-                      ? 'जैसे: आधी रात को आइसक्रीम ड्राइव'
+                    lang === 'hinglish'
+                      ? 'Jaise: Midnight Ice Cream Walk'
                       : 'e.g. Midnight Ice Cream Walk'
                   }
                   className="w-full px-3.5 py-2.5 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C]"
@@ -165,7 +134,7 @@ export function VouchersAndMemories({
 
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'विवरण' : 'Promise Details'}
+                  {lang === 'hinglish' ? 'Details' : 'Promise Details'}
                 </label>
                 <textarea
                   rows={2}
@@ -173,8 +142,8 @@ export function VouchersAndMemories({
                   onChange={(e) => setVDetail(e.target.value)}
                   maxLength={200}
                   placeholder={
-                    lang === 'hi'
-                      ? 'जैसे: बिना किसी बहाने के तुम्हारी पसंद की जगह चलेंगे।'
+                    lang === 'hinglish'
+                      ? 'Jaise: Bina kisi bahane ke tumhari favorite jagah chalenge.'
                       : 'e.g. Whenever you ask, no excuses, just us.'
                   }
                   className="w-full px-3.5 py-2 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C] resize-none"
@@ -183,14 +152,14 @@ export function VouchersAndMemories({
 
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'कब तक मान्य (Validity)' : 'Valid For'}
+                  {lang === 'hinglish' ? 'Validity' : 'Valid For'}
                 </label>
                 <input
                   type="text"
                   value={vValid}
                   onChange={(e) => setVValid(e.target.value)}
                   maxLength={50}
-                  placeholder={lang === 'hi' ? 'जैसे: हमेशा के लिए' : 'e.g. Anytime this month'}
+                  placeholder={lang === 'hinglish' ? 'Jaise: Valid Forever' : 'e.g. Anytime this month'}
                   className="w-full px-3.5 py-2 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C]"
                 />
               </div>
@@ -200,7 +169,7 @@ export function VouchersAndMemories({
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#C81E4C] hover:bg-[#AD1740] rounded-lg transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'वादा जोड़ें' : 'Add Love Voucher'}</span>
+                <span>{lang === 'hinglish' ? 'Promise Add Karo' : 'Add Love Voucher'}</span>
               </button>
             </form>
 
@@ -217,20 +186,20 @@ export function VouchersAndMemories({
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5 text-[#C81E4C]" />
                             <span className="text-[#C81E4C]">
-                              {lang === 'hi' ? 'भुनाया गया' : 'Claimed'}
+                              {lang === 'hinglish' ? 'Claimed' : 'Claimed'}
                             </span>
                           </>
                         ) : (
                           <>
                             <Ticket className="w-3.5 h-3.5 text-[#C81E4C]" />
-                            <span>{lang === 'hi' ? 'उपयोग के लिए तैयार' : 'Ready to Claim'}</span>
+                            <span>{lang === 'hinglish' ? 'Ready to Claim' : 'Ready to Claim'}</span>
                           </>
                         )}
                       </span>
                       <button
                         type="button"
                         onClick={() => onDeleteVoucher(voucher.id)}
-                        aria-label={lang === 'hi' ? 'वादा हटाएं' : 'Delete voucher'}
+                        aria-label="Delete voucher"
                         className="p-1 text-[#6B5E65] hover:text-[#C81E4C] cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -254,7 +223,7 @@ export function VouchersAndMemories({
                         onClick={() => onResetVoucher(voucher.id)}
                         className="text-xs font-medium text-[#C81E4C] hover:underline cursor-pointer"
                       >
-                        {lang === 'hi' ? 'फिर से सक्रिय करें' : 'Reset'}
+                        {lang === 'hinglish' ? 'Reset Karo' : 'Reset'}
                       </button>
                     )}
                   </div>
@@ -270,11 +239,11 @@ export function VouchersAndMemories({
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-8">
             <p className="text-xs font-medium text-[#C81E4C] mb-2">
-              {lang === 'hi' ? '04. हमारी यादें' : '04. Memory Timeline'}
+              {lang === 'hinglish' ? '04. Hamari Yaadein' : '04. Memory Timeline'}
             </p>
             <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#1B1518] mb-2 [text-wrap:balance]">
-              {lang === 'hi'
-                ? 'वे ख़ूबसूरत पल जो हमेशा दिल के पास हैं'
+              {lang === 'hinglish'
+                ? 'Woh Special Moments Jo Hamesha Dil Ke Paas Hain'
                 : 'Moments Worth Keeping Forever'}
             </h2>
           </div>
@@ -285,33 +254,33 @@ export function VouchersAndMemories({
               className="lg:col-span-5 bg-white border border-[#E6DFE3] rounded-2xl p-6 space-y-4"
             >
               <h3 className="font-serif text-lg font-bold text-[#1B1518]">
-                {lang === 'hi' ? 'नई याद जोड़ें' : 'Add a Shared Memory'}
+                {lang === 'hinglish' ? 'Nayi Memory Add Karo' : 'Add a Shared Memory'}
               </h3>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-[#6B5E65] mb-1">
-                    {lang === 'hi' ? 'तारीख़ / महीना' : 'Date / Month'}
+                    {lang === 'hinglish' ? 'Date / Month' : 'Date / Month'}
                   </label>
                   <input
                     type="text"
                     value={mDate}
                     onChange={(e) => setMDate(e.target.value)}
                     maxLength={40}
-                    placeholder={lang === 'hi' ? 'जैसे: जुलाई 2025' : 'e.g. July 2025'}
+                    placeholder={lang === 'hinglish' ? 'Jaise: July 2025' : 'e.g. July 2025'}
                     className="w-full px-3 py-2 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C]"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#6B5E65] mb-1">
-                    {lang === 'hi' ? 'जगह' : 'Place'}
+                    {lang === 'hinglish' ? 'Place' : 'Place'}
                   </label>
                   <input
                     type="text"
                     value={mPlace}
                     onChange={(e) => setMPlace(e.target.value)}
                     maxLength={50}
-                    placeholder={lang === 'hi' ? 'जैसे: मरीन ड्राइव' : 'e.g. Old Café'}
+                    placeholder={lang === 'hinglish' ? 'Jaise: Marine Drive' : 'e.g. Old Café'}
                     className="w-full px-3 py-2 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C]"
                   />
                 </div>
@@ -319,7 +288,7 @@ export function VouchersAndMemories({
 
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1">
-                  {lang === 'hi' ? 'याद का शीर्षक' : 'Memory Title'}
+                  {lang === 'hinglish' ? 'Memory Title' : 'Memory Title'}
                 </label>
                 <input
                   type="text"
@@ -328,8 +297,8 @@ export function VouchersAndMemories({
                   onChange={(e) => setMTitle(e.target.value)}
                   maxLength={90}
                   placeholder={
-                    lang === 'hi'
-                      ? 'जैसे: पहली बारिश में लंबी सैर'
+                    lang === 'hinglish'
+                      ? 'Jaise: Pehli Baarish Mein Long Walk'
                       : 'e.g. Walking through the first monsoon rain'
                   }
                   className="w-full px-3.5 py-2 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C]"
@@ -338,7 +307,7 @@ export function VouchersAndMemories({
 
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1">
-                  {lang === 'hi' ? 'उस पल की कहानी' : 'The Story'}
+                  {lang === 'hinglish' ? 'Us Din Ki Story' : 'The Story'}
                 </label>
                 <textarea
                   rows={3}
@@ -347,8 +316,8 @@ export function VouchersAndMemories({
                   onChange={(e) => setMStory(e.target.value)}
                   maxLength={400}
                   placeholder={
-                    lang === 'hi'
-                      ? 'उस दिन क्या ख़ास हुआ था...'
+                    lang === 'hinglish'
+                      ? 'Us din kya special hua tha...'
                       : 'What made that moment unforgettable...'
                   }
                   className="w-full px-3.5 py-2 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C] resize-none"
@@ -357,7 +326,7 @@ export function VouchersAndMemories({
 
               <div>
                 <span className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'तस्वीर चुनें या अपलोड करें' : 'Artwork or Photo'}
+                  {lang === 'hinglish' ? 'Photo Lagao' : 'Artwork or Photo'}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -369,7 +338,7 @@ export function VouchersAndMemories({
                         : 'border-[#DED5DA] text-[#6B5E65]'
                     }`}
                   >
-                    {lang === 'hi' ? 'चाय और बारिश' : 'Rainy Chai'}
+                    {lang === 'hinglish' ? 'Chai & Rain' : 'Rainy Chai'}
                   </button>
                   <button
                     type="button"
@@ -380,7 +349,7 @@ export function VouchersAndMemories({
                         : 'border-[#DED5DA] text-[#6B5E65]'
                     }`}
                   >
-                    {lang === 'hi' ? 'तैरते दीये' : 'Lantern Twilight'}
+                    {lang === 'hinglish' ? 'Lantern Night' : 'Lantern Twilight'}
                   </button>
                   <button
                     type="button"
@@ -388,7 +357,7 @@ export function VouchersAndMemories({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#1B1518] bg-[#FAF8F9] border border-[#DED5DA] hover:border-[#C81E4C] rounded-lg cursor-pointer"
                   >
                     <ImagePlus className="w-3.5 h-3.5 text-[#C81E4C]" />
-                    <span>{lang === 'hi' ? 'फ़ोटो अपलोड' : 'Upload Photo'}</span>
+                    <span>{lang === 'hinglish' ? 'Upload Photo' : 'Upload Photo'}</span>
                   </button>
                   <input
                     ref={fileInputRef}
@@ -405,7 +374,7 @@ export function VouchersAndMemories({
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#1B1518] hover:bg-[#31262C] rounded-lg transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>{lang === 'hi' ? 'याद सहेजें' : 'Save Memory'}</span>
+                <span>{lang === 'hinglish' ? 'Memory Save Karo' : 'Save Memory'}</span>
               </button>
             </form>
 
@@ -436,7 +405,7 @@ export function VouchersAndMemories({
                         <button
                           type="button"
                           onClick={() => onDeleteMemory(memory.id)}
-                          aria-label={lang === 'hi' ? 'याद हटाएं' : 'Delete memory'}
+                          aria-label="Delete memory"
                           className="p-1 text-[#6B5E65] hover:text-[#C81E4C] cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

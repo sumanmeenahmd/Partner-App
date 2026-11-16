@@ -19,22 +19,44 @@ function base64ToUtf8(b64: string): string {
   return new TextDecoder().decode(bytes);
 }
 
-export function encodeKeepsakeToUrl(data: KeepsakeData): string {
-  // Strip inline base64 uploaded photos if large so share links stay clean and reliable
-  const sanitized: KeepsakeData = {
-    ...data,
-    memories: data.memories.map((m) => ({
-      ...m,
-      imageUrl:
-        m.imageUrl && m.imageUrl.startsWith('data:') && m.imageUrl.length > 8000
-          ? undefined
-          : m.imageUrl,
-    })),
-  };
-  const payload = utf8ToBase64(JSON.stringify(sanitized));
+export function encodeKeepsakeToUrl(data: KeepsakeData): { url: string; strippedPhotos: number } {
+  let strippedPhotos = 0;
+
+  // Keep built-in asset URLs; only strip large uploaded data URLs if total size would break browser URL limits
+  const fullPayload = utf8ToBase64(JSON.stringify(data));
+  let finalData = data;
+
+  if (fullPayload.length > 24000) {
+    finalData = {
+      ...data,
+      shayaris: data.shayaris.map((s) => {
+        if (s.imageUrl && s.imageUrl.startsWith('data:') && s.imageUrl.length > 6000) {
+          strippedPhotos += 1;
+          return { ...s, imageUrl: undefined, photoLayout: 'none' };
+        }
+        return s;
+      }),
+      letters: data.letters.map((l) => {
+        if (l.imageUrl && l.imageUrl.startsWith('data:') && l.imageUrl.length > 6000) {
+          strippedPhotos += 1;
+          return { ...l, imageUrl: undefined };
+        }
+        return l;
+      }),
+      memories: data.memories.map((m) => {
+        if (m.imageUrl && m.imageUrl.startsWith('data:') && m.imageUrl.length > 6000) {
+          strippedPhotos += 1;
+          return { ...m, imageUrl: undefined };
+        }
+        return m;
+      }),
+    };
+  }
+
+  const payload = utf8ToBase64(JSON.stringify(finalData));
   const url = new URL(window.location.href);
   url.hash = `gift=${payload}`;
-  return url.toString();
+  return { url: url.toString(), strippedPhotos };
 }
 
 export function decodeKeepsakeFromHash(): KeepsakeData | null {

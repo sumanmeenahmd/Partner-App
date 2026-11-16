@@ -9,7 +9,7 @@ interface HeroSectionProps {
   onChangeLang: (lang: Language) => void;
   data: KeepsakeData;
   onUpdateProfile: (profile: KeepsakeProfile) => void;
-  onCopyShareLink: () => Promise<boolean>;
+  onCopyShareLink: () => Promise<{ ok: boolean; strippedPhotos: number }>;
 }
 
 export function HeroSection({
@@ -21,7 +21,7 @@ export function HeroSection({
 }: HeroSectionProps) {
   const [editingProfile, setEditingProfile] = useState(false);
   const [draft, setDraft] = useState<KeepsakeProfile>(data.profile);
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'copied_trimmed'>('idle');
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,10 +35,10 @@ export function HeroSection({
   };
 
   const handleCopyClick = async () => {
-    const ok = await onCopyShareLink();
-    if (ok) {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2600);
+    const res = await onCopyShareLink();
+    if (res.ok) {
+      setCopyStatus(res.strippedPhotos > 0 ? 'copied_trimmed' : 'copied');
+      window.setTimeout(() => setCopyStatus('idle'), 3500);
     }
   };
 
@@ -48,11 +48,11 @@ export function HeroSection({
         {/* Workspace language segmented switch placed below header */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-[#E6DFE3]">
           <div className="flex items-center gap-2 text-xs text-[#6B5E65]">
-            <span>{lang === 'hi' ? 'रचना स्टूडियो' : 'Keepsake Atelier'}</span>
+            <span>{lang === 'hinglish' ? 'Partner Keepsake Studio' : 'Keepsake Atelier'}</span>
             <span aria-hidden="true">·</span>
             <span>
-              {lang === 'hi'
-                ? `${data.profile.senderName} से ${data.profile.partnerName} के लिए`
+              {lang === 'hinglish'
+                ? `${data.profile.senderName} se ${data.profile.partnerName} ke liye`
                 : `Crafted by ${data.profile.senderName} for ${data.profile.partnerName}`}
             </span>
           </div>
@@ -64,14 +64,14 @@ export function HeroSection({
           >
             <button
               type="button"
-              onClick={() => onChangeLang('hi')}
+              onClick={() => onChangeLang('hinglish')}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                lang === 'hi'
+                lang === 'hinglish'
                   ? 'bg-white text-[#1B1518] shadow-xs'
                   : 'text-[#6B5E65] hover:text-[#1B1518]'
               }`}
             >
-              हिंदी
+              Hinglish
             </button>
             <button
               type="button"
@@ -92,24 +92,24 @@ export function HeroSection({
           <div className="lg:col-span-6 flex flex-col justify-between gap-8">
             <div className="space-y-5">
               <p className="text-xs font-medium text-[#C81E4C]">
-                {lang === 'hi'
-                  ? 'शायरी · दिल की चिट्ठियाँ · ख़ास तोहफ़ा'
-                  : 'Handwritten Shayari · Sealed Letters · Shared Keepsake'}
+                {lang === 'hinglish'
+                  ? 'Shayari + Photo Cards · Dil Ki Letters · Pyar Ke Waade'
+                  : 'Handwritten Shayari · Photo Cards · Sealed Letters'}
               </p>
 
               <h1
                 className="font-serif font-bold tracking-tight text-[#1B1518] leading-[1.2] max-w-xl [text-wrap:balance]"
-                style={{ fontSize: 'clamp(2.15rem, 3.8vw, 3.25rem)' }}
+                style={{ fontSize: 'clamp(2.15rem, 3.8vw, 3.2rem)' }}
               >
-                {lang === 'hi'
-                  ? `${data.profile.partnerName} के नाम, लफ़्ज़ों में बुना एक ख़ास एहसास।`
-                  : `Words & Keepsakes Written Exclusively for ${data.profile.partnerName}.`}
+                {lang === 'hinglish'
+                  ? `${data.profile.partnerName} ke liye, shayari aur photo ke saath ek special gift.`
+                  : `Words, Photos & Keepsakes Written Just for ${data.profile.partnerName}.`}
               </h1>
 
               <p className="text-base text-[#5A4E54] leading-relaxed max-w-xl">
-                {lang === 'hi'
-                  ? 'यहाँ आप अपनी ख़ुद की शायरी लिखकर सुंदर कार्ड बना सकते हैं, बंद लिफ़ाफ़ों में दिल की चिट्ठियाँ रख सकते हैं और प्यार के वादों के साथ यह पूरा तोहफ़ा अपने पार्टनर को भेज सकते हैं।'
-                  : 'Compose your own Shayari onto collectible cards, seal heartfelt letters for quiet moments, craft redeemable love promises, and send the entire keepsake as an interactive gift link.'}
+                {lang === 'hinglish'
+                  ? 'Yahan tum apni shayari likh kar usi card mein apni photo laga sakte ho, WhatsApp par bhejne ke liye PNG download kar sakte ho, aur sealed letters aur sweet promises ke saath poora gift link share kar sakte ho.'
+                  : 'Write your own Shayari with your photo right on the card, download crisp PNGs for WhatsApp, seal heartfelt letters, and share the whole keepsake via one interactive gift link.'}
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -117,7 +117,7 @@ export function HeroSection({
                   href="#shayari-studio"
                   className="px-5 py-2.5 text-sm font-semibold text-white bg-[#1B1518] hover:bg-[#31262C] rounded-lg transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B1518]"
                 >
-                  {lang === 'hi' ? 'शायरी लिखें' : 'Write Shayari'}
+                  {lang === 'hinglish' ? 'Shayari + Photo Banao' : 'Write Shayari'}
                 </a>
 
                 <button
@@ -125,19 +125,31 @@ export function HeroSection({
                   onClick={handleCopyClick}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#1B1518] bg-white border border-[#DED5DA] hover:border-[#C81E4C]/50 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C81E4C]"
                 >
-                  {copied ? (
+                  {copyStatus !== 'idle' ? (
                     <>
                       <Check className="w-4 h-4 text-[#C81E4C]" />
-                      <span>{lang === 'hi' ? 'गिफ़्ट लिंक कॉपी हुआ' : 'Gift Link Copied'}</span>
+                      <span>
+                        {lang === 'hinglish' ? 'Gift Link Copy Ho Gaya!' : 'Gift Link Copied!'}
+                      </span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4 text-[#6B5E65]" />
-                      <span>{lang === 'hi' ? 'गिफ़्ट लिंक कॉपी करें' : 'Copy Gift Link'}</span>
+                      <span>
+                        {lang === 'hinglish' ? 'Gift Link Copy Karo' : 'Copy Gift Link'}
+                      </span>
                     </>
                   )}
                 </button>
               </div>
+
+              {copyStatus === 'copied_trimmed' && (
+                <p className="text-xs text-[#6B5E65]">
+                  {lang === 'hinglish'
+                    ? 'Note: Link chhota rakhne ke liye kuch heavy uploaded photos hata di gayi hain. Photo wale cards ke liye PNG Download use karein.'
+                    : 'Note: Heavy uploaded photos were omitted to keep the URL valid. Use Download PNG on photo cards to share them directly.'}
+                </p>
+              )}
             </div>
 
             {/* Dedication & Couple Name Personalizer */}
@@ -159,7 +171,7 @@ export function HeroSection({
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-[#C81E4C] hover:underline underline-offset-4 cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
-                      <span>{lang === 'hi' ? 'नाम व संदेश बदलें' : 'Edit Names'}</span>
+                      <span>{lang === 'hinglish' ? 'Naam & Note Edit Karo' : 'Edit Names'}</span>
                     </button>
                   </div>
                   <p className="font-serif text-sm text-[#1B1518] leading-relaxed">
@@ -171,7 +183,7 @@ export function HeroSection({
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <label className="block">
                       <span className="block text-xs font-medium text-[#6B5E65] mb-1">
-                        {lang === 'hi' ? 'पार्टनर का नाम' : 'Partner Name'}
+                        {lang === 'hinglish' ? 'Partner Ka Naam' : 'Partner Name'}
                       </span>
                       <input
                         type="text"
@@ -183,7 +195,7 @@ export function HeroSection({
                     </label>
                     <label className="block">
                       <span className="block text-xs font-medium text-[#6B5E65] mb-1">
-                        {lang === 'hi' ? 'आपका नाम' : 'Your Name'}
+                        {lang === 'hinglish' ? 'Tumhara Naam' : 'Your Name'}
                       </span>
                       <input
                         type="text"
@@ -195,7 +207,7 @@ export function HeroSection({
                     </label>
                     <label className="block">
                       <span className="block text-xs font-medium text-[#6B5E65] mb-1">
-                        {lang === 'hi' ? 'ख़ास तारीख़' : 'Special Date'}
+                        {lang === 'hinglish' ? 'Special Date' : 'Special Date'}
                       </span>
                       <input
                         type="text"
@@ -208,7 +220,7 @@ export function HeroSection({
                   </div>
                   <label className="block">
                     <span className="block text-xs font-medium text-[#6B5E65] mb-1">
-                      {lang === 'hi' ? 'समर्पण संदेश (Dedication)' : 'Dedication Note'}
+                      {lang === 'hinglish' ? 'Pyar Bhara Note (Dedication)' : 'Dedication Note'}
                     </span>
                     <textarea
                       rows={2}
@@ -224,13 +236,13 @@ export function HeroSection({
                       onClick={() => setEditingProfile(false)}
                       className="px-3 py-1.5 text-xs font-medium text-[#6B5E65] hover:text-[#1B1518] cursor-pointer"
                     >
-                      {lang === 'hi' ? 'रद्द करें' : 'Cancel'}
+                      {lang === 'hinglish' ? 'Cancel' : 'Cancel'}
                     </button>
                     <button
                       type="submit"
                       className="px-4 py-1.5 text-xs font-semibold text-white bg-[#C81E4C] hover:bg-[#AD1740] rounded-lg cursor-pointer"
                     >
-                      {lang === 'hi' ? 'सेव करें' : 'Save'}
+                      {lang === 'hinglish' ? 'Save Karo' : 'Save'}
                     </button>
                   </div>
                 </form>
@@ -244,7 +256,7 @@ export function HeroSection({
               <ResilientImage
                 src={ASSET_IMAGES.heroAtelier}
                 alt="Handwritten cotton paper poetry notebook with brass pen and dried rose petals"
-                fallbackTitle={lang === 'hi' ? 'महफ़िल शायरी डायरी' : 'Mehfil Poetry Journal'}
+                fallbackTitle="Mehfil Poetry Journal"
                 className="w-full h-full lg:h-full object-cover"
               />
             </div>
@@ -258,7 +270,7 @@ export function HeroSection({
               {data.shayaris.length}
             </div>
             <div className="text-xs text-[#6B5E65] mt-1">
-              {lang === 'hi' ? 'लिखी गई शायरी' : 'Shayari Written'}
+              {lang === 'hinglish' ? 'Likhi Hui Shayari' : 'Shayari Written'}
             </div>
           </div>
           <div>
@@ -266,7 +278,7 @@ export function HeroSection({
               {data.letters.length}
             </div>
             <div className="text-xs text-[#6B5E65] mt-1">
-              {lang === 'hi' ? 'दिल की चिट्ठियाँ' : 'Sealed Letters'}
+              {lang === 'hinglish' ? 'Sealed Letters' : 'Sealed Letters'}
             </div>
           </div>
           <div>
@@ -274,7 +286,7 @@ export function HeroSection({
               {data.vouchers.length}
             </div>
             <div className="text-xs text-[#6B5E65] mt-1">
-              {lang === 'hi' ? 'प्यार के वादे' : 'Love Vouchers'}
+              {lang === 'hinglish' ? 'Pyar Ke Waade' : 'Love Vouchers'}
             </div>
           </div>
           <div>
@@ -282,7 +294,7 @@ export function HeroSection({
               {data.memories.length}
             </div>
             <div className="text-xs text-[#6B5E65] mt-1">
-              {lang === 'hi' ? 'सहेजी यादें' : 'Saved Memories'}
+              {lang === 'hinglish' ? 'Saved Yaadein' : 'Saved Memories'}
             </div>
           </div>
         </div>

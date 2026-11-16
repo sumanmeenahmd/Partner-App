@@ -1,8 +1,10 @@
-export type Language = 'hi' | 'en';
+export type Language = 'hinglish' | 'en';
 
 export type ShayariPaperTheme = 'alabaster' | 'plum' | 'rosewater' | 'ink';
 
 export type ShayariMood = 'ishq' | 'muskaan' | 'intezaar' | 'waada' | 'yaad';
+
+export type ShayariPhotoLayout = 'none' | 'framed' | 'backdrop';
 
 export interface ShayariItem {
   id: string;
@@ -10,6 +12,8 @@ export interface ShayariItem {
   lines: string;
   mood: ShayariMood;
   theme: ShayariPaperTheme;
+  imageUrl?: string;
+  photoLayout?: ShayariPhotoLayout;
   createdAt: string;
   isFavorite: boolean;
 }
@@ -19,6 +23,7 @@ export interface LoveLetter {
   prompt: string;
   body: string;
   signOff: string;
+  imageUrl?: string;
   createdAt: string;
   opened: boolean;
 }

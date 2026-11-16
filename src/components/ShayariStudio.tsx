@@ -1,13 +1,33 @@
-import { useState } from 'react';
-import { BookOpen, Check, Download, Edit2, Heart, Plus, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import {
+  BookOpen,
+  Check,
+  Copy,
+  Download,
+  Edit2,
+  Heart,
+  ImagePlus,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
+import {
+  ASSET_IMAGES,
   MOOD_LABELS,
   PAPER_THEME_META,
   POETIC_STARTERS,
   RHYME_LEXICON,
 } from '../data/defaults';
-import { Language, ShayariItem, ShayariMood, ShayariPaperTheme } from '../types/keepsake';
+import {
+  Language,
+  ShayariItem,
+  ShayariMood,
+  ShayariPaperTheme,
+  ShayariPhotoLayout,
+} from '../types/keepsake';
 import { downloadShayariCardPng } from '../utils/canvasExport';
+import { resizeImageFile } from '../utils/imageHelper';
+import { ResilientImage } from './ResilientImage';
 
 interface ShayariStudioProps {
   lang: Language;
@@ -38,10 +58,14 @@ export function ShayariStudio({
   const [lines, setLines] = useState('');
   const [mood, setMood] = useState<ShayariMood>('ishq');
   const [theme, setTheme] = useState<ShayariPaperTheme>('alabaster');
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [photoLayout, setPhotoLayout] = useState<ShayariPhotoLayout>('framed');
   const [showLexicon, setShowLexicon] = useState(false);
   const [filterMood, setFilterMood] = useState<'all' | ShayariMood>('all');
   const [savedNotice, setSavedNotice] = useState(false);
+  const [copiedWhatsAppId, setCopiedWhatsAppId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeTheme = PAPER_THEME_META[theme];
 
@@ -51,6 +75,24 @@ export function ShayariStudio({
     setLines('');
     setMood('ishq');
     setTheme('alabaster');
+    setImageUrl(undefined);
+    setPhotoLayout('framed');
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await resizeImageFile(file, 720, 0.78);
+      setImageUrl(compressed);
+      if (photoLayout === 'none') {
+        setPhotoLayout('framed');
+      }
+    } catch {
+      // ignore invalid file
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,7 +100,12 @@ export function ShayariStudio({
     const trimmedLines = lines.trim();
     if (!trimmedLines) return;
     const finalTitle =
-      title.trim() || (lang === 'hi' ? `${partnerName} के नाम` : `For ${partnerName}`);
+      title.trim() || (lang === 'hinglish' ? `${partnerName} Ke Naam` : `For ${partnerName}`);
+    const finalLayout: ShayariPhotoLayout = imageUrl
+      ? photoLayout === 'none'
+        ? 'framed'
+        : photoLayout
+      : 'none';
 
     if (editingId) {
       const existing = shayaris.find((s) => s.id === editingId);
@@ -69,6 +116,8 @@ export function ShayariStudio({
           lines: trimmedLines,
           mood,
           theme,
+          imageUrl,
+          photoLayout: finalLayout,
         });
       }
       setEditingId(null);
@@ -78,12 +127,16 @@ export function ShayariStudio({
         lines: trimmedLines,
         mood,
         theme,
+        imageUrl,
+        photoLayout: finalLayout,
         isFavorite: false,
       });
     }
 
     setTitle('');
     setLines('');
+    setImageUrl(undefined);
+    setPhotoLayout('framed');
     setSavedNotice(true);
     window.setTimeout(() => setSavedNotice(false), 2200);
   };
@@ -94,25 +147,50 @@ export function ShayariStudio({
     setLines(item.lines);
     setMood(item.mood);
     setTheme(item.theme);
+    setImageUrl(item.imageUrl);
+    setPhotoLayout(item.photoLayout || (item.imageUrl ? 'framed' : 'none'));
     const el = document.getElementById('shayari-composer');
     el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  const insertWord = (word: string) => {
-    setLines((prev) => (prev ? `${prev}${prev.endsWith('\n') || prev.endsWith(' ') ? '' : ' '}${word}` : word));
+  const handleCopyWhatsApp = async (item: ShayariItem) => {
+    const formatted = `*${item.title}*\n\n${item.lines}\n\n— ${senderName} ki taraf se ${partnerName} ke liye`;
+    try {
+      await navigator.clipboard.writeText(formatted);
+      setCopiedWhatsAppId(item.id);
+      window.setTimeout(() => setCopiedWhatsAppId(null), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
   };
+
+  const insertWord = (word: string) => {
+    setLines((prev) =>
+      prev ? `${prev}${prev.endsWith('\n') || prev.endsWith(' ') ? '' : ' '}${word}` : word
+    );
+  };
+
+  const previewLayout: ShayariPhotoLayout = imageUrl
+    ? photoLayout === 'none'
+      ? 'framed'
+      : photoLayout
+    : 'none';
 
   const previewItem: ShayariItem = {
     id: editingId || 'preview',
-    title: title.trim() || (lang === 'hi' ? 'आपकी शायरी का शीर्षक' : 'Your Shayari Title'),
+    title:
+      title.trim() ||
+      (lang === 'hinglish' ? 'Tumhari Shayari Ka Title' : 'Your Shayari Title'),
     lines:
       lines.trim() ||
-      (lang === 'hi'
-        ? 'तुम्हारी यादों का मौसम कुछ इस तरह छाया है,\nहर लफ़्ज़ में आज फिर तुम्हारा नाम आया है।'
+      (lang === 'hinglish'
+        ? 'Tumhari yaadon ka mausam kuch is tarah chhaya hai,\nHar lafz mein aaj phir tumhara naam aaya hai.'
         : 'Every quiet line written here carries a piece of your warmth,\nTurning ordinary evenings into poetry.'),
     mood,
     theme,
-    createdAt: lang === 'hi' ? 'आज' : 'Today',
+    imageUrl,
+    photoLayout: previewLayout,
+    createdAt: lang === 'hinglish' ? 'Aaj' : 'Today',
     isFavorite: false,
   };
 
@@ -125,12 +203,12 @@ export function ShayariStudio({
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
             <p className="text-xs font-medium text-[#C81E4C] mb-2">
-              {lang === 'hi' ? '01. शायरी स्टूडियो' : '01. Shayari Studio'}
+              {lang === 'hinglish' ? '01. Shayari + Photo Studio' : '01. Shayari Studio'}
             </p>
             <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#1B1518] [text-wrap:balance]">
-              {lang === 'hi'
-                ? 'अपने दिल की शायरी लिखें और कार्ड बनाएं'
-                : 'Write Your Own Shayari & Design Keepsake Cards'}
+              {lang === 'hinglish'
+                ? 'Apni shayari likho aur usi card mein photo lagao'
+                : 'Write Your Shayari & Attach Your Photo'}
             </h2>
           </div>
 
@@ -142,11 +220,11 @@ export function ShayariStudio({
             <BookOpen className="w-3.5 h-3.5 text-[#C81E4C]" />
             <span>
               {showLexicon
-                ? lang === 'hi'
-                  ? 'लफ़्ज़ कोश बंद करें'
+                ? lang === 'hinglish'
+                  ? 'Words Helper Band Karo'
                   : 'Hide Poetic Words'
-                : lang === 'hi'
-                  ? 'शायरी लफ़्ज़ व शुरुआत'
+                : lang === 'hinglish'
+                  ? 'Shayari Words & Ideas'
                   : 'Poetic Words & Starters'}
             </span>
           </button>
@@ -155,13 +233,11 @@ export function ShayariStudio({
         {/* Optional Poetic Lexicon & Starters Helper */}
         {showLexicon && (
           <div className="mb-8 p-5 bg-white border border-[#E6DFE3] rounded-xl space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-[#1B1518]">
-                {lang === 'hi'
-                  ? 'लिखने में मदद के लिए ख़ूबसूरत लफ़्ज़ (क्लिक करके जोड़ें)'
-                  : 'Click a poetic word or starter line to insert into your draft'}
-              </h3>
-            </div>
+            <h3 className="text-sm font-semibold text-[#1B1518]">
+              {lang === 'hinglish'
+                ? 'Click karke pyare words ya starting lines apni shayari mein add karo:'
+                : 'Click a poetic word or starter line to insert into your draft:'}
+            </h3>
             <div className="flex flex-wrap gap-2">
               {RHYME_LEXICON.map((word) => (
                 <button
@@ -181,7 +257,7 @@ export function ShayariStudio({
                   type="button"
                   onClick={() => {
                     setMood(starter.mood);
-                    setLines(lang === 'hi' ? starter.hi : starter.en);
+                    setLines(lang === 'hinglish' ? starter.hinglish : starter.en);
                   }}
                   className="text-left p-3 rounded-lg bg-[#FAF8F9] border border-[#E6DFE3] hover:border-[#C81E4C] transition-colors cursor-pointer"
                 >
@@ -189,7 +265,7 @@ export function ShayariStudio({
                     {MOOD_LABELS[starter.mood][lang]}
                   </div>
                   <div className="font-serif text-sm text-[#1B1518] whitespace-pre-line">
-                    {lang === 'hi' ? starter.hi : starter.en}
+                    {lang === 'hinglish' ? starter.hinglish : starter.en}
                   </div>
                 </button>
               ))}
@@ -207,10 +283,10 @@ export function ShayariStudio({
             onSubmit={handleSubmit}
             className="lg:col-span-6 bg-white border border-[#E6DFE3] rounded-2xl p-6 flex flex-col justify-between gap-5"
           >
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'शायरी का शीर्षक (उनवान)' : 'Shayari Title'}
+                  {lang === 'hinglish' ? 'Shayari Ka Title' : 'Shayari Title'}
                 </label>
                 <input
                   type="text"
@@ -218,8 +294,8 @@ export function ShayariStudio({
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={80}
                   placeholder={
-                    lang === 'hi'
-                      ? 'जैसे: पहली बारिश और तुम'
+                    lang === 'hinglish'
+                      ? 'Jaise: Pehli Baarish Aur Tum'
                       : 'e.g. Evening Tea & Your Smile'
                   }
                   className="w-full px-3.5 py-2.5 text-sm bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C]"
@@ -228,7 +304,7 @@ export function ShayariStudio({
 
               <div>
                 <span className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'अहसास चुनें (Mood)' : 'Mood'}
+                  {lang === 'hinglish' ? 'Mood Select Karo' : 'Mood'}
                 </span>
                 <div className="flex flex-wrap gap-1.5 p-1 bg-[#F3EEF2] rounded-lg">
                   {MOODS.map((m) => (
@@ -250,26 +326,118 @@ export function ShayariStudio({
 
               <div>
                 <label className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'अपनी शायरी यहाँ लिखें' : 'Write Your Shayari Lines'}
+                  {lang === 'hinglish' ? 'Apni Shayari Yahan Likho' : 'Write Your Shayari Lines'}
                 </label>
                 <textarea
-                  rows={6}
+                  rows={5}
                   required
                   value={lines}
                   onChange={(e) => setLines(e.target.value)}
                   maxLength={800}
                   placeholder={
-                    lang === 'hi'
-                      ? 'यहाँ हिंदी, उर्दू या हिंग्लिश में अपनी शायरी की पंक्तियाँ लिखें...'
-                      : 'Write your couplets or poem lines here (Hindi, Urdu, Hinglish, or English)...'
+                    lang === 'hinglish'
+                      ? 'Apne dil ki lines yahan likho (Hinglish, English ya Hindi mein)...'
+                      : 'Write your couplets or poem lines here...'
                   }
                   className="w-full px-4 py-3 font-serif text-base leading-relaxed bg-[#FAF8F9] border border-[#DED5DA] rounded-lg focus:outline-none focus:border-[#C81E4C] resize-y"
                 />
               </div>
 
+              {/* Photo Attachment & Layout Controls */}
+              <div className="p-4 rounded-xl bg-[#FAF8F9] border border-[#E6DFE3] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-[#1B1518]">
+                    {lang === 'hinglish'
+                      ? 'Card Mein Photo Lagao (Optional)'
+                      : 'Attach Photo to Card (Optional)'}
+                  </span>
+                  {imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl(undefined)}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-[#C81E4C] hover:underline cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>{lang === 'hinglish' ? 'Photo Hatao' : 'Remove Photo'}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#1B1518] hover:bg-[#31262C] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5" />
+                    <span>{lang === 'hinglish' ? 'Gallery Se Photo Lagao' : 'Upload Photo'}</span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageUrl(ASSET_IMAGES.teaEvening);
+                      if (photoLayout === 'none') setPhotoLayout('framed');
+                    }}
+                    className="px-2.5 py-1.5 text-xs text-[#5A4E54] bg-white border border-[#DED5DA] hover:border-[#C81E4C] rounded-lg cursor-pointer"
+                  >
+                    {lang === 'hinglish' ? 'Chai Evening' : 'Chai Preset'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageUrl(ASSET_IMAGES.starlightLantern);
+                      if (photoLayout === 'none') setPhotoLayout('framed');
+                    }}
+                    className="px-2.5 py-1.5 text-xs text-[#5A4E54] bg-white border border-[#DED5DA] hover:border-[#C81E4C] rounded-lg cursor-pointer"
+                  >
+                    {lang === 'hinglish' ? 'Lantern Night' : 'Lantern Preset'}
+                  </button>
+                </div>
+
+                {imageUrl && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-[#6B5E65]">
+                      {lang === 'hinglish' ? 'Photo Style:' : 'Photo Layout:'}
+                    </span>
+                    <div className="inline-flex p-1 bg-[#EFEAEF] rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => setPhotoLayout('framed')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer ${
+                          photoLayout !== 'backdrop'
+                            ? 'bg-white text-[#1B1518] shadow-xs'
+                            : 'text-[#6B5E65]'
+                        }`}
+                      >
+                        {lang === 'hinglish' ? 'Photo Upar' : 'Photo Top'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhotoLayout('backdrop')}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-md cursor-pointer ${
+                          photoLayout === 'backdrop'
+                            ? 'bg-white text-[#1B1518] shadow-xs'
+                            : 'text-[#6B5E65]'
+                        }`}
+                      >
+                        {lang === 'hinglish' ? 'Photo Background' : 'Full Backdrop'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <span className="block text-xs font-medium text-[#6B5E65] mb-1.5">
-                  {lang === 'hi' ? 'कार्ड का काग़ज़ (Paper Style)' : 'Card Paper Style'}
+                  {lang === 'hinglish' ? 'Card Theme' : 'Card Paper Style'}
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {THEMES.map((t) => (
@@ -291,14 +459,14 @@ export function ShayariStudio({
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#F0EAEF]">
-              <div className="flex items-center gap-2">
+              <div>
                 {editingId && (
                   <button
                     type="button"
                     onClick={handleReset}
                     className="px-3.5 py-2 text-xs font-medium text-[#6B5E65] hover:text-[#1B1518] cursor-pointer"
                   >
-                    {lang === 'hi' ? 'नया लिखें' : 'Cancel Edit'}
+                    {lang === 'hinglish' ? 'Naya Likho' : 'Cancel Edit'}
                   </button>
                 )}
               </div>
@@ -307,7 +475,7 @@ export function ShayariStudio({
                 {savedNotice && (
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-[#C81E4C]">
                     <Check className="w-3.5 h-3.5" />
-                    {lang === 'hi' ? 'संग्रह में जोड़ा गया' : 'Saved'}
+                    {lang === 'hinglish' ? 'Save Ho Gaya!' : 'Saved!'}
                   </span>
                 )}
                 <button
@@ -317,11 +485,11 @@ export function ShayariStudio({
                   <Plus className="w-4 h-4" />
                   <span>
                     {editingId
-                      ? lang === 'hi'
-                        ? 'बदलाव सेव करें'
+                      ? lang === 'hinglish'
+                        ? 'Changes Save Karo'
                         : 'Save Changes'
-                      : lang === 'hi'
-                        ? 'शायरी सेव करें'
+                      : lang === 'hinglish'
+                        ? 'Shayari Save Karo'
                         : 'Save Shayari'}
                   </span>
                 </button>
@@ -331,51 +499,127 @@ export function ShayariStudio({
 
           {/* Right: Live Typeset Card Preview */}
           <div className="lg:col-span-6 flex flex-col justify-between gap-4">
-            <div
-              className={`flex-1 rounded-2xl border p-8 md:p-10 flex flex-col justify-between transition-colors ${activeTheme.bgClass} ${activeTheme.borderClass}`}
-            >
-              <div className="flex items-center justify-between text-xs">
-                <span className={activeTheme.mutedClass}>
-                  {MOOD_LABELS[mood][lang]}
-                  <span aria-hidden="true" className="mx-1.5">·</span>
-                  {lang === 'hi' ? 'लाइव झलक' : 'Live Preview'}
-                </span>
-                <span className={`font-serif ${activeTheme.mutedClass}`}>Mehfil</span>
-              </div>
+            {previewLayout === 'backdrop' && previewItem.imageUrl ? (
+              <div className="relative flex-1 min-h-[460px] rounded-2xl overflow-hidden border border-[#E6DFE3] flex flex-col justify-between p-8 md:p-10 text-white">
+                <ResilientImage
+                  src={previewItem.imageUrl}
+                  alt={previewItem.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div
+                  className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/55 to-black/40"
+                  aria-hidden="true"
+                />
 
-              <div className="my-8 text-center space-y-5">
-                <h3 className={`font-serif text-xl md:text-2xl font-bold ${activeTheme.textClass}`}>
-                  {previewItem.title}
-                </h3>
-                <div className="w-12 h-px mx-auto bg-[#C81E4C]/50" />
-                <p
-                  className={`font-serif text-base md:text-lg leading-[1.9] whitespace-pre-line max-w-md mx-auto ${activeTheme.textClass}`}
-                >
-                  {previewItem.lines}
-                </p>
-              </div>
+                <div className="relative z-10 flex items-center justify-between text-xs text-white/80">
+                  <span>
+                    {MOOD_LABELS[mood][lang]}
+                    <span aria-hidden="true" className="mx-1.5">·</span>
+                    {lang === 'hinglish' ? 'Live Preview' : 'Live Preview'}
+                  </span>
+                  <span className="font-serif">Mehfil</span>
+                </div>
 
-              <div className={`text-center text-xs pt-4 border-t border-current/10 ${activeTheme.mutedClass}`}>
-                {lang === 'hi'
-                  ? `${senderName} की ओर से ${partnerName} के लिए`
-                  : `Written by ${senderName} for ${partnerName}`}
-              </div>
-            </div>
+                <div className="relative z-10 my-8 text-center space-y-5">
+                  <h3 className="font-serif text-xl md:text-2xl font-bold text-white">
+                    {previewItem.title}
+                  </h3>
+                  <div className="w-12 h-px mx-auto bg-[#F48CA7]" />
+                  <p className="font-serif text-base md:text-lg leading-[1.9] whitespace-pre-line max-w-md mx-auto text-white">
+                    {previewItem.lines}
+                  </p>
+                </div>
 
-            <div className="flex items-center justify-between gap-4 px-1">
-              <p className="text-xs text-[#6B5E65]">
-                {lang === 'hi'
-                  ? 'इस कार्ड को सीधे इमेज के रूप में डाउनलोड करें'
-                  : 'Export this card as a high-resolution PNG'}
-              </p>
-              <button
-                type="button"
-                onClick={() => downloadShayariCardPng(previewItem, senderName, partnerName, lang)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-[#1B1518] bg-white border border-[#DED5DA] hover:border-[#C81E4C] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                <div className="relative z-10 text-center text-xs pt-4 border-t border-white/20 text-white/85">
+                  {lang === 'hinglish'
+                    ? `${senderName} ki taraf se ${partnerName} ke liye`
+                    : `Written by ${senderName} for ${partnerName}`}
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`flex-1 rounded-2xl border overflow-hidden flex flex-col justify-between transition-colors ${activeTheme.bgClass} ${activeTheme.borderClass}`}
               >
-                <Download className="w-3.5 h-3.5 text-[#C81E4C]" />
-                <span>{lang === 'hi' ? 'PNG डाउनलोड करें' : 'Download PNG'}</span>
-              </button>
+                {previewLayout === 'framed' && previewItem.imageUrl && (
+                  <div className="aspect-[16/9] w-full overflow-hidden bg-[#EFEAEF]">
+                    <ResilientImage
+                      src={previewItem.imageUrl}
+                      alt={previewItem.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="p-7 md:p-9 flex-1 flex flex-col justify-between gap-6">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className={activeTheme.mutedClass}>
+                      {MOOD_LABELS[mood][lang]}
+                      <span aria-hidden="true" className="mx-1.5">·</span>
+                      {lang === 'hinglish' ? 'Live Preview' : 'Live Preview'}
+                    </span>
+                    <span className={`font-serif ${activeTheme.mutedClass}`}>Mehfil</span>
+                  </div>
+
+                  <div className="text-center space-y-4">
+                    <h3
+                      className={`font-serif text-xl md:text-2xl font-bold ${activeTheme.textClass}`}
+                    >
+                      {previewItem.title}
+                    </h3>
+                    <div className="w-12 h-px mx-auto bg-[#C81E4C]/50" />
+                    <p
+                      className={`font-serif text-base md:text-lg leading-[1.9] whitespace-pre-line max-w-md mx-auto ${activeTheme.textClass}`}
+                    >
+                      {previewItem.lines}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`text-center text-xs pt-4 border-t border-current/10 ${activeTheme.mutedClass}`}
+                  >
+                    {lang === 'hinglish'
+                      ? `${senderName} ki taraf se ${partnerName} ke liye`
+                      : `Written by ${senderName} for ${partnerName}`}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+              <p className="text-xs text-[#6B5E65]">
+                {lang === 'hinglish'
+                  ? 'WhatsApp par bhejne ke liye PNG download ya text copy karo'
+                  : 'Export this photo + shayari card as PNG or copy text'}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyWhatsApp(previewItem)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#1B1518] bg-white border border-[#DED5DA] hover:border-[#C81E4C] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  {copiedWhatsAppId === previewItem.id ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#C81E4C]" />
+                      <span>{lang === 'hinglish' ? 'Text Copy Hua' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-[#6B5E65]" />
+                      <span>{lang === 'hinglish' ? 'WhatsApp Text' : 'Copy Text'}</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void downloadShayariCardPng(previewItem, senderName, partnerName, lang)
+                  }
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1B1518] bg-white border border-[#DED5DA] hover:border-[#C81E4C] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#C81E4C]" />
+                  <span>{lang === 'hinglish' ? 'Download PNG' : 'Download PNG'}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -384,8 +628,8 @@ export function ShayariStudio({
         <div className="mt-14 pt-10 border-t border-[#E6DFE3]">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <h3 className="font-serif text-xl font-bold text-[#1B1518]">
-              {lang === 'hi'
-                ? `सहेजी गई शायरी (${filteredShayaris.length})`
+              {lang === 'hinglish'
+                ? `Saved Shayari (${filteredShayaris.length})`
                 : `Saved Shayari Anthology (${filteredShayaris.length})`}
             </h3>
 
@@ -399,7 +643,7 @@ export function ShayariStudio({
                     : 'text-[#6B5E65] hover:text-[#1B1518]'
                 }`}
               >
-                {lang === 'hi' ? 'सभी' : 'All'}
+                {lang === 'hinglish' ? 'All' : 'All'}
               </button>
               {MOODS.map((m) => (
                 <button
@@ -421,13 +665,13 @@ export function ShayariStudio({
           {filteredShayaris.length === 0 ? (
             <div className="p-10 bg-white border border-[#E6DFE3] rounded-2xl text-center">
               <p className="font-serif text-base text-[#1B1518] mb-1">
-                {lang === 'hi'
-                  ? 'इस मिज़ाज में अभी कोई शायरी नहीं है।'
+                {lang === 'hinglish'
+                  ? 'Is mood mein abhi koi shayari nahi hai.'
                   : 'No Shayari in this mood yet.'}
               </p>
               <p className="text-xs text-[#6B5E65]">
-                {lang === 'hi'
-                  ? 'ऊपर दिए गए स्टूडियो से अपनी पहली शायरी जोड़ें।'
+                {lang === 'hinglish'
+                  ? 'Upar wale studio se apni pehli shayari + photo add karo.'
                   : 'Use the composer above to write your first couplet.'}
               </p>
             </div>
@@ -435,94 +679,174 @@ export function ShayariStudio({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredShayaris.map((item) => {
                 const pTheme = PAPER_THEME_META[item.theme];
+                const layout = item.imageUrl ? item.photoLayout || 'framed' : 'none';
+
                 return (
                   <article
                     key={item.id}
-                    className={`rounded-2xl border p-6 flex flex-col justify-between gap-6 ${pTheme.bgClass} ${pTheme.borderClass}`}
+                    className={`rounded-2xl border overflow-hidden flex flex-col justify-between ${
+                      layout === 'backdrop'
+                        ? 'relative text-white border-[#E6DFE3] min-h-[360px]'
+                        : `${pTheme.bgClass} ${pTheme.borderClass}`
+                    }`}
                   >
-                    <div>
-                      <div className={`text-xs mb-3 ${pTheme.mutedClass}`}>
-                        <span>{MOOD_LABELS[item.mood][lang]}</span>
-                        <span aria-hidden="true" className="mx-1.5">·</span>
-                        <span>{item.createdAt}</span>
-                      </div>
-                      <h4 className={`font-serif text-lg font-bold mb-3 ${pTheme.textClass}`}>
-                        {item.title}
-                      </h4>
-                      <p
-                        className={`font-serif text-sm leading-[1.85] whitespace-pre-line ${pTheme.textClass}`}
-                      >
-                        {item.lines}
-                      </p>
-                    </div>
+                    {layout === 'backdrop' && item.imageUrl && (
+                      <>
+                        <ResilientImage
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div
+                          className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/60 to-black/40"
+                          aria-hidden="true"
+                        />
+                      </>
+                    )}
 
-                    <div className="pt-4 border-t border-current/10 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => onToggleFavorite(item.id)}
-                          aria-label={lang === 'hi' ? 'पसंदीदा चिह्नित करें' : 'Toggle favorite'}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                            item.isFavorite
-                              ? 'text-[#C81E4C]'
-                              : `${pTheme.mutedClass} hover:text-[#C81E4C]`
+                    {layout === 'framed' && item.imageUrl && (
+                      <div className="aspect-[16/10] w-full overflow-hidden bg-[#EFEAEF]">
+                        <ResilientImage
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <div
+                      className={`p-6 flex-1 flex flex-col justify-between gap-6 ${
+                        layout === 'backdrop' ? 'relative z-10' : ''
+                      }`}
+                    >
+                      <div>
+                        <div
+                          className={`text-xs mb-3 ${
+                            layout === 'backdrop' ? 'text-white/75' : pTheme.mutedClass
                           }`}
                         >
-                          <Heart
-                            className="w-4 h-4"
-                            fill={item.isFavorite ? 'currentColor' : 'none'}
-                          />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            downloadShayariCardPng(item, senderName, partnerName, lang)
-                          }
-                          aria-label={lang === 'hi' ? 'PNG डाउनलोड करें' : 'Download PNG'}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer ${pTheme.mutedClass} hover:text-[#C81E4C]`}
+                          <span>{MOOD_LABELS[item.mood][lang]}</span>
+                          <span aria-hidden="true" className="mx-1.5">·</span>
+                          <span>{item.createdAt}</span>
+                        </div>
+                        <h4
+                          className={`font-serif text-lg font-bold mb-3 ${
+                            layout === 'backdrop' ? 'text-white' : pTheme.textClass
+                          }`}
                         >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleStartEdit(item)}
-                          aria-label={lang === 'hi' ? 'संपादित करें' : 'Edit'}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer ${pTheme.mutedClass} hover:text-[#C81E4C]`}
+                          {item.title}
+                        </h4>
+                        <p
+                          className={`font-serif text-sm leading-[1.85] whitespace-pre-line ${
+                            layout === 'backdrop' ? 'text-white/95' : pTheme.textClass
+                          }`}
                         >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                          {item.lines}
+                        </p>
                       </div>
 
-                      {confirmDeleteId === item.id ? (
-                        <div className="flex items-center gap-2 text-xs">
+                      <div className="pt-4 border-t border-current/15 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => {
-                              onDeleteShayari(item.id);
-                              setConfirmDeleteId(null);
-                            }}
-                            className="font-semibold text-[#C81E4C] hover:underline cursor-pointer"
+                            onClick={() => onToggleFavorite(item.id)}
+                            aria-label="Toggle favorite"
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                              item.isFavorite
+                                ? 'text-[#F48CA7]'
+                                : layout === 'backdrop'
+                                  ? 'text-white/75 hover:text-white'
+                                  : `${pTheme.mutedClass} hover:text-[#C81E4C]`
+                            }`}
                           >
-                            {lang === 'hi' ? 'हटाएं' : 'Confirm'}
+                            <Heart
+                              className="w-4 h-4"
+                              fill={item.isFavorite ? 'currentColor' : 'none'}
+                            />
                           </button>
                           <button
                             type="button"
-                            onClick={() => setConfirmDeleteId(null)}
-                            className={`${pTheme.mutedClass} hover:underline cursor-pointer`}
+                            onClick={() => handleCopyWhatsApp(item)}
+                            aria-label="Copy WhatsApp text"
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                              copiedWhatsAppId === item.id
+                                ? 'text-[#C81E4C]'
+                                : layout === 'backdrop'
+                                  ? 'text-white/75 hover:text-white'
+                                  : `${pTheme.mutedClass} hover:text-[#C81E4C]`
+                            }`}
                           >
-                            {lang === 'hi' ? 'नहीं' : 'Cancel'}
+                            {copiedWhatsAppId === item.id ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void downloadShayariCardPng(item, senderName, partnerName, lang)
+                            }
+                            aria-label="Download PNG"
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                              layout === 'backdrop'
+                                ? 'text-white/75 hover:text-white'
+                                : `${pTheme.mutedClass} hover:text-[#C81E4C]`
+                            }`}
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(item)}
+                            aria-label="Edit"
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                              layout === 'backdrop'
+                                ? 'text-white/75 hover:text-white'
+                                : `${pTheme.mutedClass} hover:text-[#C81E4C]`
+                            }`}
+                          >
+                            <Edit2 className="w-4 h-4" />
                           </button>
                         </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(item.id)}
-                          aria-label={lang === 'hi' ? 'हटाएं' : 'Delete'}
-                          className={`p-2 rounded-lg transition-colors cursor-pointer ${pTheme.mutedClass} hover:text-[#C81E4C]`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+
+                        {confirmDeleteId === item.id ? (
+                          <div className="flex items-center gap-2 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onDeleteShayari(item.id);
+                                setConfirmDeleteId(null);
+                              }}
+                              className="font-semibold text-[#F48CA7] hover:underline cursor-pointer"
+                            >
+                              {lang === 'hinglish' ? 'Delete' : 'Confirm'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                              className={`${
+                                layout === 'backdrop' ? 'text-white/75' : pTheme.mutedClass
+                              } hover:underline cursor-pointer`}
+                            >
+                              {lang === 'hinglish' ? 'No' : 'Cancel'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(item.id)}
+                            aria-label="Delete"
+                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                              layout === 'backdrop'
+                                ? 'text-white/75 hover:text-white'
+                                : `${pTheme.mutedClass} hover:text-[#C81E4C]`
+                            }`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </article>
                 );
